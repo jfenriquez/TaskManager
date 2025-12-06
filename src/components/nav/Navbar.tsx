@@ -1,0 +1,255 @@
+"use client";
+
+import { authClient } from "@/src/lib/auth-client";
+import { useEffect, useRef, useState } from "react";
+import { gsap } from "gsap";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { Role } from "../../types/auth";
+
+export default function Navbar() {
+  const { data: session, isPending, error } = authClient.useSession();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [logoutError, setLogoutError] = useState<string | null>(null);
+  const navRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (navRef.current) {
+      // Animación de entrada del navbar
+      gsap.from(navRef.current, {
+        y: -100,
+        opacity: 0,
+        duration: 0.6,
+        ease: "power3.out",
+      });
+    }
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      setIsLoggingOut(true);
+      setLogoutError(null);
+
+      await authClient.signOut({
+        fetchOptions: {
+          onSuccess: () => {
+            // Limpiar el estado local antes de redirigir
+            router.push("/login");
+            // Forzar recarga para limpiar el estado
+            setTimeout(() => {
+              window.location.href = "/login";
+            }, 100);
+          },
+          onError: (ctx) => {
+            console.error("Error al cerrar sesión:", ctx.error);
+            setLogoutError("Error al cerrar sesión. Intenta de nuevo.");
+            setIsLoggingOut(false);
+          },
+        },
+      });
+    } catch (error) {
+      console.error("Error al cerrar sesión:", error);
+      setLogoutError("Error inesperado al cerrar sesión");
+      setIsLoggingOut(false);
+    }
+  };
+
+  // Manejar error de sesión
+  useEffect(() => {
+    if (error) {
+      console.error("Error de sesión:", error);
+    }
+  }, [error]);
+
+  return (
+    <div ref={navRef} className="navbar shadow-lg px-4 sticky top-0 z-50">
+      {/* Logo / Brand */}
+      <div className="flex-1">
+        <Link href="/" className="btn btn-ghost text-xl font-bold">
+          <span className="text-primary">🚀🚀🚀</span>
+        </Link>
+      </div>
+
+      {/* Navigation Links */}
+      <div className="flex-none gap-2">
+        {isPending ? (
+          // Loading state
+          <div className="flex gap-2 items-center">
+            <div className="skeleton h-10 w-20"></div>
+            <div className="skeleton h-10 w-10 rounded-full"></div>
+          </div>
+        ) : session?.user ? (
+          // User is logged in
+          <>
+            {/* User Dropdown */}
+            <div className="dropdown dropdown-end">
+              <div
+                tabIndex={0}
+                role="button"
+                className="btn btn-ghost btn-circle avatar"
+                aria-label="Menú de usuario"
+              >
+                <div className="w-10 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2">
+                  {session.user.image ? (
+                    <img
+                      src={session.user.image}
+                      alt={session.user.name || "Usuario"}
+                      onError={(e) => {
+                        // Fallback si la imagen falla al cargar
+                        e.currentTarget.style.display = "none";
+                        e.currentTarget.parentElement!.innerHTML = `
+                          <div class="bg-primary text-primary-content w-full h-full flex items-center justify-center text-xl font-bold">
+                            ${session.user.name?.charAt(0).toUpperCase() || "U"}
+                          </div>
+                        `;
+                      }}
+                    />
+                  ) : (
+                    <div className="bg-primary text-primary-content w-full h-full flex items-center justify-center text-xl font-bold">
+                      {session.user.name?.charAt(0).toUpperCase() || "U"}
+                    </div>
+                  )}
+                </div>
+              </div>
+              <ul
+                tabIndex={0}
+                className="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow-lg bg-base-100 rounded-box w-64 border border-base-300"
+              >
+                {/* User Info */}
+                <li className="menu-title">
+                  <div className="flex flex-col gap-1 px-2 py-3">
+                    <span className="font-bold text-base truncate">
+                      {session.user.name || "Usuario"}
+                    </span>
+                    <span className="text-xs text-base-content/60 truncate">
+                      {session.user.email}
+                    </span>
+                  </div>
+                </li>
+                <li>
+                  <div className="divider my-0"></div>
+                </li>
+
+                {/* Menu Items */}
+                <li>
+                  <Link href="/profile" className="flex items-center gap-2">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth={1.5}
+                      stroke="currentColor"
+                      className="w-5 h-5"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"
+                      />
+                    </svg>
+                    Mi Perfil
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/settings" className="flex items-center gap-2">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth={1.5}
+                      stroke="currentColor"
+                      className="w-5 h-5"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
+                    </svg>
+                    Configuración
+                  </Link>
+                </li>
+
+                <li>
+                  <div className="divider my-0"></div>
+                </li>
+
+                {/* Logout Error Message */}
+                {logoutError && (
+                  <li>
+                    <div className="alert alert-error py-2 text-xs">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="stroke-current shrink-0 h-4 w-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
+                      <span>{logoutError}</span>
+                    </div>
+                  </li>
+                )}
+
+                {/* Logout */}
+                <li>
+                  <button
+                    onClick={handleLogout}
+                    disabled={isLoggingOut}
+                    className="flex items-center gap-2 text-error hover:bg-error/10 disabled:opacity-50"
+                  >
+                    {isLoggingOut ? (
+                      <>
+                        <span className="loading loading-spinner loading-sm"></span>
+                        Cerrando sesión...
+                      </>
+                    ) : (
+                      <>
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          strokeWidth={1.5}
+                          stroke="currentColor"
+                          className="w-5 h-5"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75"
+                          />
+                        </svg>
+                        Cerrar Sesión
+                      </>
+                    )}
+                  </button>
+                </li>
+              </ul>
+            </div>
+          </>
+        ) : (
+          // User is not logged in
+          <div className="flex gap-2">
+            <Link href="/login" className="btn btn-ghost">
+              Iniciar Sesión
+            </Link>
+            <Link href="/register" className="btn btn-primary">
+              Registrarse
+            </Link>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

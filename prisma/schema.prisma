@@ -1,0 +1,99 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Tasks {
+  id                    String    @id @default(cuid())
+  title                 String
+  description           String?
+  completed             Boolean   @default(false)
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  timerMinutes          Int? // duración configurada por defecto (minutos)
+  timerStartedAt        DateTime? // cuándo se inició el temporizador
+  timerEndsAt           DateTime? // cuándo debería terminar (null si está pausado o no iniciado)
+  timerRemainingSeconds Int? // si está pausado, los segundos restantes
+  timerRunning          Boolean   @default(false) // true si está corriendo
+}
+
+model User {
+  id            String    @id
+  name          String
+  email         String    @unique
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @default(now()) @updatedAt
+  emailVerified Boolean   @default(false)
+  tasks         Tasks[]
+  accounts      Account[]
+  sessions      Session[]
+  role          Role      @default(USER)
+
+  @@map("user")
+}
+
+enum Role {
+  USER
+  ADMIN
+  MODERATOR
+}
+
+model Session {
+  id        String   @id
+  userId    String
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  userId                String
+  scope                 String?
+  accountId             String
+  providerId            String
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now()) @updatedAt
+
+  @@map("verification")
+}
+
+model Jwks {
+  id         String   @id
+  publicKey  String
+  privateKey String
+  createdAt  DateTime
+
+  @@map("jwks")
+}
