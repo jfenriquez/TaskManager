@@ -21,6 +21,8 @@ model Tasks {
   timerEndsAt           DateTime? // cuándo debería terminar (null si está pausado o no iniciado)
   timerRemainingSeconds Int? // si está pausado, los segundos restantes
   timerRunning          Boolean   @default(false) // true si está corriendo
+  priority              String?   @default("MEDIUM") // prioridad de la tarea (LOW, MEDIUM, HIGH)
+  ExecutionDate         DateTime? // fecha de vencimiento de la tarea
 }
 
 model User {
@@ -35,6 +37,7 @@ model User {
   accounts      Account[]
   sessions      Session[]
   role          Role      @default(USER)
+  streak        Int       @default(0) // racha actual de días completados de tareas
 
   @@map("user")
 }
