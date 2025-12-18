@@ -86,15 +86,15 @@ export default function TaskAvatar({
 
   return (
     <div
-      className={`relative inline-flex items-center justify-center rounded-full overflow-hidden transform transition-transform duration-300 ${
-        pulse ? "scale-105" : "scale-100"
+      className={`relative inline-flex items-center justify-center rounded-full overflow-hidden transform transition-transform duration-300  ${
+        pulse ? "scale-100" : "scale-150 "
       } ${bg} ${className}`}
       style={style}
       aria-label={`Avatar de estado: ${mood}. ${pending} pendientes, ${completed} completadas`}
       title={`${pending} tareas pendientes — ${completed} completadas`}
     >
       <div
-        className={`flex items-center justify-center w-full h-full ${iconColor}`}
+        className={`flex items-center justify-center w-3xl h-3xl ${iconColor} `}
       >
         {playerReady ? (
           // @ts-expect-error - lottie-player is a web component loaded at runtime
@@ -116,12 +116,6 @@ export default function TaskAvatar({
         ) : (
           <Icon aria-hidden />
         )}
-      </div>
-
-      {/* Badge con contadores */}
-      <div className="absolute -right-1 -bottom-1 bg-white rounded-full text-xs px-2 py-0.5 shadow border">
-        <span className="text-red-500 font-semibold mr-1">{pending}</span>
-        <span className="text-green-600">{completed}</span>
       </div>
     </div>
   );

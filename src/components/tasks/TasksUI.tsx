@@ -17,6 +17,7 @@ import TaskFilter from "@/src/components/tasks/TaskFilter";
 import TaskList from "@/src/components/tasks/TaskList";
 import TaskModal from "@/src/components/tasks/TaskModal";
 import { Task, NewTaskForm, FilterType } from "@/src/types/task.types";
+import TaskTotalTime from "./TaskTotalTime";
 
 interface TasksProps {
   data?: Tasks[];
@@ -169,7 +170,7 @@ export default function TasksUI({ data = [] }: TasksProps) {
   const filteredTasks = filterTasks(tasks, filter);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50">
+    <div className="min-h-screen bg-base-200 transition-colors duration-200">
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         <TaskHeader
           userName={user?.name ?? undefined}
@@ -180,7 +181,7 @@ export default function TasksUI({ data = [] }: TasksProps) {
 
         <TaskStatsComponent stats={stats} />
 
-        <div className="card bg-white shadow-2xl">
+        <div className="card bg-base-100 shadow-xl transition-colors duration-200">
           <div className="card-body">
             <TaskFilter
               filter={filter}

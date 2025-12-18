@@ -17,21 +17,27 @@ export default function TaskFilter({
 }: TaskFilterProps) {
   return (
     <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6">
-      <div className="btn-group">
+      <div className="join">
         <button
-          className={`btn btn-sm ${filter === "all" ? "btn-active" : ""}`}
+          className={`btn btn-sm join-item ${
+            filter === "all" ? "btn-active btn-primary" : "btn-info-ghost"
+          }`}
           onClick={() => onFilterChange("all")}
         >
           Todas
         </button>
         <button
-          className={`btn btn-sm ${filter === "active" ? "btn-active" : ""}`}
+          className={`btn btn-sm join-item ${
+            filter === "active" ? "btn-active btn-primary" : "btn-info-ghost"
+          }`}
           onClick={() => onFilterChange("active")}
         >
           Activas
         </button>
         <button
-          className={`btn btn-sm ${filter === "completed" ? "btn-active" : ""}`}
+          className={`btn btn-sm join-item ${
+            filter === "completed" ? "btn-active btn-primary" : "btn-info-ghost"
+          }`}
           onClick={() => onFilterChange("completed")}
         >
           Completadas
@@ -39,7 +45,7 @@ export default function TaskFilter({
       </div>
 
       <button className="btn btn-primary gap-2" onClick={onAddTask}>
-        <FaPlus size={20} />
+        <FaPlus size={18} />
         Nueva Tarea
       </button>
     </div>

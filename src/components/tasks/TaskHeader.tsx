@@ -1,7 +1,7 @@
 // components/TaskHeader.tsx
 
 import React from "react";
-import { FaTrash } from "react-icons/fa";
+import { FaTrash, FaBell } from "react-icons/fa";
 import TaskAvatar from "./TaskAvatar";
 import { TaskStats } from "../../types/task.types";
 
@@ -26,17 +26,18 @@ export default function TaskHeader({
           completed={stats.completed}
           size={72}
         />
-        <div>
-          <h1 className="text-5xl font-extrabold bg-gradient-to-r from-purple-500 to-pink-500 text-transparent bg-clip-text mb-2">
+        <div className="p-5">
+          <h1 className="text-4xl md:text-5xl font-extrabold text-primary mb-2">
             Gestor de Tareas
           </h1>
-          <p className="text-gray-600">
+          <p className="text-base-content/70">
             Organiza tu día de manera efectiva{userName ? `, ${userName}` : ""}
           </p>
           <button
             onClick={onRequestNotifications}
-            className="btn btn-sm btn-outline mt-2 bg-amber-300"
+            className="btn btn-sm btn-warning gap-2 mt-2"
           >
+            <FaBell size={14} />
             Activar notificaciones
           </button>
         </div>
@@ -45,10 +46,10 @@ export default function TaskHeader({
       <div>
         <button
           onClick={onDeleteCompleted}
-          className="btn btn-error btn-md text-white gap-2 hover:brightness-110 transition-all duration-200"
+          className="btn btn-error btn-md gap-2"
         >
-          <FaTrash />
-          Eliminar tareas completadas
+          <FaTrash size={16} />
+          Eliminar completadas
         </button>
       </div>
     </div>

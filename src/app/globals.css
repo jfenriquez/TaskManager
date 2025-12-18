@@ -1,27 +1,113 @@
 @import "tailwindcss";
-@plugin "daisyui";
-/* :root {
+
+@plugin "daisyui" {
+  themes: light, dark, cupcake, bumblebee, emerald, corporate, synthwave, retro,
+    cyberpunk, valentine, halloween, garden, forest, aqua, lofi, pastel, fantasy,
+    wireframe, black, luxury, dracula, cmyk, autumn, business, acid, lemonade,
+    night, coffee, winter, dim, nord, sunset, caramellatte, abyss, silk;
+}
+
+/* DaisyUI v5: Configure light and dark themes using data-theme attribute
+   ThemeProvider will set <html data-theme="light"> or <html data-theme="dark">
+ */
+
+/* Light theme (default) */
+[data-theme="light"],
+:root {
+  --primary: #2563eb;
+  --primary-focus: #1d4ed8;
+  --primary-content: #ffffff;
+
+  --secondary: #7c3aed;
+  --secondary-focus: #6d28d9;
+  --secondary-content: #ffffff;
+
+  --accent: #ea580c;
+  --accent-focus: #c2410c;
+  --accent-content: #ffffff;
+
+  --neutral: #e5e7eb;
+  --neutral-focus: #d1d5db;
+  --neutral-content: #1f2937;
+
+  --base-100: #ffffff;
+  --base-200: #f3f4f6;
+  --base-300: #e5e7eb;
+  --base-content: #0f172a;
+
+  --success: #16a34a;
+  --warning: #ea580c;
+  --error: #dc2626;
+  --info: #0ea5e9;
+
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #0f172a;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* Dark theme */
+[data-theme="dark"] {
+  --primary: #60a5fa;
+  --primary-focus: #3b82f6;
+  --primary-content: #ffffff;
+
+  --secondary: #a78bfa;
+  --secondary-focus: #8b5cf6;
+  --secondary-content: #ffffff;
+
+  --accent: #f97316;
+  --accent-focus: #ea580c;
+  --accent-content: #ffffff;
+
+  --neutral: #374151;
+  --neutral-focus: #1f2937;
+  --neutral-content: #f3f4f6;
+
+  --base-100: #0f172a;
+  --base-200: #1e293b;
+  --base-300: #334155;
+  --base-content: #f1f5f9;
+
+  --success: #22c55e;
+  --warning: #f97316;
+  --error: #ef4444;
+  --info: #38bdf8;
+
+  --background: #0f172a;
+  --foreground: #f1f5f9;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* DaisyUI also respects .dark class for additional customization */
+.dark {
+  color-scheme: dark;
+}
+
+/* Apply CSS Variables */
+html,
+body {
+  @apply transition-colors duration-300;
+  background-color: var(--base-100);
+  color: var(--base-content);
+}
+
+/* Tailwind + DaisyUI theme overrides */
+@layer components {
+  .card-dark {
+    @apply bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700;
+  }
+
+  .text-primary {
+    @apply text-blue-600 dark:text-blue-400;
+  }
+
+  .text-secondary {
+    @apply text-violet-600 dark:text-violet-400;
+  }
+
+  .text-muted {
+    @apply text-gray-500 dark:text-gray-400;
+  }
+
+  .btn-theme {
+    @apply bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700;
   }
 }
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
-}
- */

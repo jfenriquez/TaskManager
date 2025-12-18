@@ -30,29 +30,31 @@ export default function TaskModal({
 
   return (
     <div className="modal modal-open">
-      <div className="modal-box">
-        <h3 className="font-bold text-2xl mb-4 text-purple-600">{title}</h3>
+      <div className="modal-box bg-base-100 transition-colors duration-200">
+        <h3 className="font-bold text-2xl mb-4 text-primary">{title}</h3>
         <div className="space-y-4">
           <div className="w-full">
             <label className="label">
-              <span className="label-text font-semibold">Título</span>
+              <span className="label-text font-semibold text-base-content">
+                Título
+              </span>
             </label>
             <input
               type="text"
               placeholder="Ej: Recoger la basura"
-              className="input input-bordered w-full"
+              className="input input-bordered w-full bg-base-200 text-base-content "
               value={task.title}
               onChange={(e) => onChange("title", e.target.value)}
             />
           </div>
           <div className="w-full">
             <label className="label">
-              <span className="label-text font-semibold">
+              <span className="label-text font-semibold text-base-content">
                 Descripción {!isEditMode && "(opcional)"}
               </span>
             </label>
             <textarea
-              className="textarea textarea-bordered h-24 w-full"
+              className="textarea textarea-bordered h-24 w-full bg-base-200 text-base-content"
               placeholder="Detalles..."
               value={task.description || ""}
               onChange={(e) => onChange("description", e.target.value)}
@@ -60,7 +62,7 @@ export default function TaskModal({
           </div>
           <div className="w-full">
             <label className="label">
-              <span className="label-text font-semibold">
+              <span className="label-text font-semibold text-base-content">
                 Duración (minutos) {!isEditMode && "- opcional"}
               </span>
             </label>
@@ -68,7 +70,7 @@ export default function TaskModal({
               type="number"
               min={1}
               placeholder="20"
-              className="input input-bordered w-full"
+              className="input input-bordered w-full bg-base-200 text-base-content"
               value={
                 "timerMinutes" in task
                   ? task.timerMinutes ?? ""
@@ -84,30 +86,27 @@ export default function TaskModal({
           </div>
         </div>
         <div className="modal-action">
-          <button className="btn btn-ghost mr-2" onClick={onClose}>
+          <button className="btn btn-ghost" onClick={onClose}>
             Cancelar
           </button>
           <button
-            className="btn btn-primary"
+            className="btn btn-primary gap-2"
             onClick={onSave}
             disabled={isPending}
           >
             {isEditMode ? (
               <>
-                <FaCheck size={20} /> Guardar
+                <FaCheck size={16} /> Guardar
               </>
             ) : (
               <>
-                <FaPlus size={20} /> Agregar
+                <FaPlus size={16} /> Agregar
               </>
             )}
           </button>
         </div>
       </div>
-      <div
-        className="modal-backdrop bg-black bg-opacity-50"
-        onClick={onClose}
-      ></div>
+      <div className="modal-backdrop" onClick={onClose}></div>
     </div>
   );
 }

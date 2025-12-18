@@ -35,56 +35,101 @@ export default function Hero() {
   }, []);
 
   return (
-    <section className="container mx-auto py-20">
-      <div className="grid md:grid-cols-2 gap-8 items-center">
+    <section className="container mx-auto py-20 px-4">
+      <div className="grid md:grid-cols-2 gap-12 items-center">
         <div ref={leftRef}>
-          <h1 className="text-4xl md:text-5xl font-extrabold leading-tight">
+          <div className="badge badge-primary badge-outline mb-4 shadow-sm">
+            ✨ Productividad mejorada
+          </div>
+          <h1 className="text-4xl md:text-6xl font-extrabold leading-tight text-primary/70">
             Organiza tus días.{" "}
-            <span className="text-primary">Avanza sin esfuerzo.</span>
+            <span className="text-primary drop-shadow-lg">
+              Avanza sin esfuerzo.
+            </span>
           </h1>
-          <p className="mt-5 text-slate-300 max-w-xl">
+          <p className="mt-6 text-base-content/70 max-w-xl text-lg leading-relaxed">
             TaskFlow es un administrador de tareas diario pensado para mantener
             tu foco y ritmo. Planifica, prioriza y consigue más con
             recordatorios inteligentes, modo lista rápida y estadísticas
             simples.
           </p>
 
-          <div className="mt-8 flex gap-4">
+          <div className="mt-8 flex flex-wrap gap-4">
             <a
-              className="inline-flex items-center gap-2 px-5 py-3 rounded-lg bg-primary text-white shadow hover:scale-105 transition"
+              className="btn btn-primary btn-lg shadow-xl hover:shadow-2xl hover:scale-105 transition-all duration-300 gap-2"
               href="/app"
             >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-6 w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M13 10V3L4 14h7v7l9-11h-7z"
+                />
+              </svg>
               Abrir App
             </a>
             <a
-              className="inline-flex items-center gap-2 px-5 py-3 rounded-lg border border-slate-700 text-sm"
+              className="btn btn-outline btn-lg shadow-lg hover:shadow-xl transition-all duration-300 gap-2"
               href="#features"
             >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
               Ver características
             </a>
           </div>
 
-          <div className="mt-8 flex gap-6 items-center">
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-slate-800 rounded-lg">
-                <FiCalendar size={18} />
-              </div>
-              <div>
-                <div className="text-sm font-medium">Planificación diaria</div>
-                <div className="text-xs text-slate-400">
-                  Rutinas y bloques de tiempo
+          <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="card bg-base-200 shadow-lg hover:shadow-xl transition-shadow duration-300">
+              <div className="card-body p-5">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 bg-primary/10 text-primary rounded-xl shadow-inner">
+                    <FiCalendar size={24} />
+                  </div>
+                  <div>
+                    <div className="font-semibold text-base-content">
+                      Planificación diaria
+                    </div>
+                    <div className="text-sm text-base-content/60">
+                      Rutinas y bloques de tiempo
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-slate-800 rounded-lg">
-                <FiThumbsUp size={18} />
-              </div>
-              <div>
-                <div className="text-sm font-medium">Fácil de usar</div>
-                <div className="text-xs text-slate-400">
-                  Interfaz limpia y accesible
+            <div className="card bg-base-200 shadow-lg hover:shadow-xl transition-shadow duration-300">
+              <div className="card-body p-5">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 bg-success/10 text-success rounded-xl shadow-inner">
+                    <FiThumbsUp size={24} />
+                  </div>
+                  <div>
+                    <div className="font-semibold text-base-content">
+                      Fácil de usar
+                    </div>
+                    <div className="text-sm text-base-content/60">
+                      Interfaz limpia y accesible
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -92,48 +137,151 @@ export default function Hero() {
         </div>
 
         <div className="relative" ref={rightRef}>
-          <div className="rounded-2xl overflow-hidden shadow-xl bg-gradient-to-b from-slate-800/60 to-slate-900 p-6">
-            <div className="flex justify-between items-center mb-4">
-              <div className="text-sm text-slate-300">Hoy</div>
-              <div className="text-xs text-slate-400">3 tareas completadas</div>
-            </div>
-
-            <ul className="space-y-3">
-              <li className="bg-slate-800/40 p-3 rounded-lg flex justify-between items-center">
-                <div>
-                  <div className="font-medium">Revisar emails</div>
-                  <div className="text-xs text-slate-400">09:00 • 10 min</div>
+          <div className="card bg-base-100 shadow-2xl hover:shadow-primary/20 transition-all duration-500 border border-base-300">
+            <div className="card-body">
+              <div className="flex justify-between items-center mb-6">
+                <div className="flex items-center gap-2">
+                  <div className="badge badge-primary badge-lg shadow-md">
+                    Hoy
+                  </div>
                 </div>
-                <div className="text-xs text-slate-300">Baja</div>
-              </li>
-
-              <li className="bg-gradient-to-r from-primary/20 to-indigo-900/30 p-3 rounded-lg flex justify-between items-center">
-                <div>
-                  <div className="font-medium">Reunión con equipo</div>
-                  <div className="text-xs text-slate-200">11:00 • 30 min</div>
+                <div className="stats shadow-inner bg-base-200">
+                  <div className="stat py-2 px-4">
+                    <div className="stat-value text-primary text-2xl">3</div>
+                    <div className="stat-desc">completadas</div>
+                  </div>
                 </div>
-                <div className="text-xs font-semibold">Alta</div>
-              </li>
+              </div>
 
-              <li className="bg-slate-800/40 p-3 rounded-lg flex justify-between items-center">
-                <div>
-                  <div className="font-medium">Terminar documento</div>
-                  <div className="text-xs text-slate-400">15:00 • 1 h</div>
-                </div>
-                <div className="text-xs text-slate-300">Media</div>
-              </li>
-            </ul>
+              <ul className="space-y-4">
+                <li className="card bg-base-200 shadow-md hover:shadow-lg transition-shadow duration-300">
+                  <div className="card-body p-4 flex flex-row justify-between items-center">
+                    <div className="flex items-center gap-3">
+                      <input type="checkbox" className="checkbox checkbox-sm" />
+                      <div>
+                        <div className="font-semibold text-base-content">
+                          Revisar emails
+                        </div>
+                        <div className="text-xs text-base-content/60 flex items-center gap-2">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-3 w-3"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                          </svg>
+                          09:00 • 10 min
+                        </div>
+                      </div>
+                    </div>
+                    <div className="badge badge-ghost badge-sm">Baja</div>
+                  </div>
+                </li>
 
-            <div className="mt-4 text-xs text-slate-400">
-              Usa la app para marcar tareas, programar recordatorios y ver tu
-              progreso.
+                <li className="card bg-gradient-to-br from-primary/20 to-secondary/20 shadow-lg hover:shadow-xl transition-all duration-300 border border-primary/30">
+                  <div className="card-body p-4 flex flex-row justify-between items-center">
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="checkbox"
+                        className="checkbox checkbox-primary checkbox-sm"
+                      />
+                      <div>
+                        <div className="font-semibold text-base-content">
+                          Reunión con equipo
+                        </div>
+                        <div className="text-xs text-base-content/70 flex items-center gap-2 font-medium">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-3 w-3"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                          </svg>
+                          11:00 • 30 min
+                        </div>
+                      </div>
+                    </div>
+                    <div className="badge badge-error badge-sm shadow-md">
+                      Alta
+                    </div>
+                  </div>
+                </li>
+
+                <li className="card bg-base-200 shadow-md hover:shadow-lg transition-shadow duration-300">
+                  <div className="card-body p-4 flex flex-row justify-between items-center">
+                    <div className="flex items-center gap-3">
+                      <input type="checkbox" className="checkbox checkbox-sm" />
+                      <div>
+                        <div className="font-semibold text-base-content">
+                          Terminar documento
+                        </div>
+                        <div className="text-xs text-base-content/60 flex items-center gap-2">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-3 w-3"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                          </svg>
+                          15:00 • 1 h
+                        </div>
+                      </div>
+                    </div>
+                    <div className="badge badge-warning badge-sm">Media</div>
+                  </div>
+                </li>
+              </ul>
+
+              <div className="divider"></div>
+
+              <div className="alert shadow-lg">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  className="stroke-info shrink-0 w-6 h-6"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  ></path>
+                </svg>
+                <span className="text-xs">
+                  Usa la app para marcar tareas, programar recordatorios y ver
+                  tu progreso.
+                </span>
+              </div>
             </div>
           </div>
 
           <div
             ref={accentRef}
-            className="absolute -right-8 -bottom-8 w-28 h-28 rounded-full bg-gradient-to-br from-primary to-indigo-400 opacity-30 blur-xl pointer-events-none"
+            className="absolute -right-10 -bottom-10 w-32 h-32 rounded-full bg-gradient-to-br from-primary to-secondary opacity-20 blur-2xl pointer-events-none"
           />
+          <div className="absolute -left-6 -top-6 w-24 h-24 rounded-full bg-gradient-to-br from-accent to-secondary opacity-15 blur-xl pointer-events-none"></div>
         </div>
       </div>
     </section>

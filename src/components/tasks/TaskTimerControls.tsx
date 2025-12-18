@@ -5,7 +5,6 @@ import { motion } from "framer-motion";
 import {
   FaPlay,
   FaPause,
-  FaStop,
   FaClock,
   FaHourglassHalf,
   FaBell,
@@ -45,31 +44,33 @@ export default function TaskTimerControls({
   const isFinished = timer.remainingMs === 0;
 
   return (
-    <div className="mt-3 flex items-center gap-4 text-slate-900">
+    <div className="mt-3 flex items-center gap-4">
       {/* Icon + label group */}
       <div className="flex items-center gap-3">
         <div
-          className={`p-2 rounded-md border-2 flex items-center gap-2 ${
+          className={`p-2 rounded-lg border-2 flex items-center gap-2 transition-all ${
             isFinished
-              ? "border-gray-200 bg-gray-50"
-              : "border-primary/30 bg-white"
+              ? "border-base-300 bg-base-200"
+              : "border-primary/30 bg-base-100"
           }`}
           title="Temporizador"
         >
           <FaClock
             className={`w-5 h-5 ${
-              isFinished ? "text-gray-400" : "text-primary"
+              isFinished ? "text-base-content/40" : "text-primary"
             }`}
           />
           <div className="flex flex-col leading-none">
-            <span className="text-xs text-gray-500">Tiempo restante</span>
+            <span className="text-xs text-base-content/60">
+              Tiempo restante
+            </span>
             <motion.span
               key={timeText}
               initial={{ opacity: 0, y: -4 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ type: "spring", stiffness: 300, damping: 20 }}
-              className={`font-mono text-sm ${
-                isFinished ? "text-gray-400" : "text-gray-800"
+              className={`font-mono text-sm font-semibold ${
+                isFinished ? "text-base-content/40" : "text-base-content"
               }`}
             >
               {timeText}
@@ -79,9 +80,9 @@ export default function TaskTimerControls({
 
         {/* duración configurada */}
         {task.timerMinutes ? (
-          <div className="text-xs opacity-80 flex items-center gap-1">
-            <FaHourglassHalf className="w-4 h-4" />
-            <span>Duración: {task.timerMinutes} min</span>
+          <div className="badge badge-ghost gap-1">
+            <FaHourglassHalf className="w-3 h-3" />
+            <span>{task.timerMinutes} min</span>
           </div>
         ) : null}
       </div>
@@ -92,24 +93,24 @@ export default function TaskTimerControls({
           <motion.button
             whileTap={{ scale: 0.95 }}
             whileHover={{ scale: 1.03 }}
-            className="btn btn-sm btn-primary gap-2 flex items-center"
+            className="btn btn-sm btn-primary gap-2"
             onClick={() => handleStartTimer(task.id)}
             aria-label="Empezar temporizador"
             title="Empezar"
           >
-            <FaPlay className="w-4 h-4" />
+            <FaPlay className="w-3 h-3" />
             <span className="hidden sm:inline">Empezar</span>
           </motion.button>
         ) : (
           <motion.button
             whileTap={{ scale: 0.95 }}
             whileHover={{ scale: 1.03 }}
-            className="btn btn-sm btn-warning gap-2 flex items-center"
+            className="btn btn-sm btn-warning gap-2"
             onClick={() => handlePauseTimer(task.id)}
             aria-label="Pausar temporizador"
             title="Pausar"
           >
-            <FaPause className="w-4 h-4" />
+            <FaPause className="w-3 h-3" />
             <span className="hidden sm:inline">Pausar</span>
           </motion.button>
         )}
@@ -117,7 +118,7 @@ export default function TaskTimerControls({
         <motion.button
           whileTap={{ scale: 0.95 }}
           whileHover={{ scale: 1.03 }}
-          className="btn btn-sm btn-ghost gap-2 flex items-center"
+          className="btn btn-sm btn-info gap-2"
           onClick={() => handleStopTimer(task.id)}
           aria-label="Detener temporizador"
           title="Detener"
@@ -125,22 +126,6 @@ export default function TaskTimerControls({
           <RiResetLeftLine className="w-4 h-4" />
           <span className="hidden sm:inline">Reiniciar</span>
         </motion.button>
-
-        {/* Notificación / alerta visual cuando termina */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: isFinished ? 1 : 0 }}
-          transition={{ duration: 0.25 }}
-          className={`flex items-center gap-2 p-2 rounded-md ${
-            isFinished ? "bg-red-50 border border-red-200" : "hidden"
-          }`}
-          role="status"
-          aria-hidden={!isFinished}
-          title={isFinished ? "Temporizador finalizado" : ""}
-        >
-          <FaBell className="w-4 h-4 text-red-500" />
-          <span className="text-xs text-red-600">Finalizado</span>
-        </motion.div>
       </div>
     </div>
   );

@@ -31,57 +31,74 @@ export default function TaskItem({
   return (
     <div
       className={`card ${
-        task.completed ? "bg-gray-50" : "bg-amber-95000"
+        task.completed ? "bg-base-200" : "bg-base-100"
       } shadow-md hover:shadow-lg transition-all duration-200 border-l-4 ${
-        task.completed ? "border-green-500" : "border-purple-500"
-      }`}
+        task.completed ? "border-success" : "border-primary"
+      } rounded-xl`}
     >
       <div className="card-body p-4">
-        <div className="flex items-start gap-4">
-          <input
-            type="checkbox"
-            className="checkbox checkbox-primary mt-1"
-            checked={task.completed}
-            onChange={() => onToggleComplete(task.id)}
-          />
-          <div className="flex-1">
+        {/* CONTENEDOR RESPONSIVO */}
+        <div className="flex flex-col sm:flex-row sm:items-start sm:gap-4">
+          {/* Checkbox */}
+          <div className="flex items-center gap-3">
+            <input
+              type="checkbox"
+              className="checkbox checkbox-primary"
+              checked={task.completed}
+              onChange={() => onToggleComplete(task.id)}
+            />
+          </div>
+
+          {/* INFO PRINCIPAL */}
+          <div className="flex-1 mt-2 sm:mt-0">
             <h3
-              className={`font-semibold text-lg ${
-                task.completed ? "line-through text-gray-400" : "text-gray-800"
+              className={`font-semibold text-lg break-words ${
+                task.completed
+                  ? "line-through text-base-content/40"
+                  : "text-base-content"
               }`}
             >
               {task.title}
             </h3>
+
             {task.description && (
               <p
-                className={`text-sm mt-1 ${
-                  task.completed ? "text-gray-400" : "text-gray-600"
+                className={`text-sm mt-2 leading-snug break-words ${
+                  task.completed
+                    ? "text-base-content/40"
+                    : "text-base-content/70"
                 }`}
               >
                 {task.description}
               </p>
             )}
 
-            <TaskTimerControls
-              task={task}
-              timer={timer}
-              formatRemaining={formatRemaining}
-              handleStartTimer={onStartTimer}
-              handlePauseTimer={onPauseTimer}
-              handleStopTimer={onStopTimer}
-            />
+            <div className="mt-3">
+              <TaskTimerControls
+                task={task}
+                timer={timer}
+                formatRemaining={formatRemaining}
+                handleStartTimer={onStartTimer}
+                handlePauseTimer={onPauseTimer}
+                handleStopTimer={onStopTimer}
+              />
+            </div>
           </div>
 
-          <div className="flex gap-2">
+          {/* BOTONES (EDIT / DELETE) — RESPONSIVOS */}
+          <div className="flex sm:flex-col gap-2 mt-4 sm:mt-0 sm:ml-2">
             <button
-              className="btn btn-ghost btn-sm btn-circle"
+              className="btn btn-sm btn-ghost text-info hover:bg-info/10"
               onClick={() => onEdit(task)}
+              aria-label="Editar tarea"
             >
               <FaEdit size={16} />
             </button>
+
             <button
-              className="btn btn-ghost btn-sm btn-circle text-error"
+              className="btn btn-sm btn-ghost text-error hover:bg-error/10"
               onClick={() => onDelete(task.id)}
+              aria-label="Eliminar tarea"
             >
               <FaTrash size={16} />
             </button>

@@ -5,7 +5,6 @@ import { useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Role } from "../../types/auth";
 
 export default function Navbar() {
   const { data: session, isPending, error } = authClient.useSession();
@@ -16,13 +15,20 @@ export default function Navbar() {
 
   useEffect(() => {
     if (navRef.current) {
-      // Animación de entrada del navbar
-      gsap.from(navRef.current, {
-        y: -100,
-        opacity: 0,
-        duration: 0.6,
-        ease: "power3.out",
-      });
+      // Animación de entrada del navbar con transform en lugar de y
+      gsap.fromTo(
+        navRef.current,
+        {
+          transform: "translateY(-100%)",
+          opacity: 0,
+        },
+        {
+          transform: "translateY(0)",
+          opacity: 1,
+          duration: 0.6,
+          ease: "power3.out",
+        }
+      );
     }
   }, []);
 
@@ -34,9 +40,7 @@ export default function Navbar() {
       await authClient.signOut({
         fetchOptions: {
           onSuccess: () => {
-            // Limpiar el estado local antes de redirigir
             router.push("/login");
-            // Forzar recarga para limpiar el estado
             setTimeout(() => {
               window.location.href = "/login";
             }, 100);
@@ -55,7 +59,6 @@ export default function Navbar() {
     }
   };
 
-  // Manejar error de sesión
   useEffect(() => {
     if (error) {
       console.error("Error de sesión:", error);
@@ -63,7 +66,10 @@ export default function Navbar() {
   }, [error]);
 
   return (
-    <div ref={navRef} className="navbar shadow-lg px-4 sticky top-0 z-50">
+    <div
+      ref={navRef}
+      className="navbar bg-base-100 shadow-lg px-4 sm:px-6 lg:px-15 sticky top-0 z-50 backdrop-blur-sm border-b border-base-300 transition-colors duration-200 pr-17"
+    >
       {/* Logo / Brand */}
       <div className="flex-1">
         <Link href="/" className="btn btn-ghost text-xl font-bold">
@@ -74,13 +80,11 @@ export default function Navbar() {
       {/* Navigation Links */}
       <div className="flex-none gap-2">
         {isPending ? (
-          // Loading state
           <div className="flex gap-2 items-center">
             <div className="skeleton h-10 w-20"></div>
             <div className="skeleton h-10 w-10 rounded-full"></div>
           </div>
         ) : session?.user ? (
-          // User is logged in
           <>
             {/* User Dropdown */}
             <div className="dropdown dropdown-end">
@@ -96,7 +100,6 @@ export default function Navbar() {
                       src={session.user.image}
                       alt={session.user.name || "Usuario"}
                       onError={(e) => {
-                        // Fallback si la imagen falla al cargar
                         e.currentTarget.style.display = "none";
                         e.currentTarget.parentElement!.innerHTML = `
                           <div class="bg-primary text-primary-content w-full h-full flex items-center justify-center text-xl font-bold">
@@ -119,7 +122,7 @@ export default function Navbar() {
                 {/* User Info */}
                 <li className="menu-title">
                   <div className="flex flex-col gap-1 px-2 py-3">
-                    <span className="font-bold text-base truncate">
+                    <span className="font-bold text-base truncate text-base-content">
                       {session.user.name || "Usuario"}
                     </span>
                     <span className="text-xs text-base-content/60 truncate">
@@ -239,12 +242,14 @@ export default function Navbar() {
             </div>
           </>
         ) : (
-          // User is not logged in
           <div className="flex gap-2">
-            <Link href="/login" className="btn btn-ghost">
+            <Link
+              href="/login"
+              className="btn btn-ghost btn-sm sm:btn-md text-base-content/70"
+            >
               Iniciar Sesión
             </Link>
-            <Link href="/register" className="btn btn-primary">
+            <Link href="/register" className="btn btn-primary btn-sm sm:btn-md">
               Registrarse
             </Link>
           </div>

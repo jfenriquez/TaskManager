@@ -58,6 +58,31 @@ export const getTasks = async () => {
   }
 };
 
+// getTotalTimerTasks
+export const getTotalTimerTasks = async () => {
+  try {
+    const userId = await getUserIdFromSession();
+    if (!userId) throw new Error("No autenticado");
+
+    const tasks = await prisma.tasks.findMany({
+      where: { userId: userId.toString(), completed: false },
+      select: { timerMinutes: true }, // solo traemos lo necesario
+    });
+
+    if (!tasks) return 0;
+
+    const total = tasks.reduce(
+      (acc, task) => acc + (task.timerMinutes ?? 0),
+      0
+    );
+
+    return total;
+  } catch (error) {
+    console.error(error);
+    throw new Error("Error obteniendo total de tiempo");
+  }
+};
+
 //////////////////////create task//////////////////////
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
@@ -117,6 +142,8 @@ export const updateTask = async ({ task }: Itask) => {
       data: task,
       where: { id: task.id, userId: userId.toString() },
     });
+    revalidatePath("/");
+
     return updateTask;
   } catch (error) {
     return error;
@@ -142,6 +169,8 @@ export const updateStatusTask = async (id: string, completed: boolean) => {
       data: { completed: completed },
       where: { id: id },
     });
+    revalidatePath("/");
+
     return updateTask;
   } catch (error) {
     return error;
@@ -166,6 +195,7 @@ export const deleteTaskXid = async (id: string) => {
     const deleteTask = await prisma.tasks.delete({
       where: { id: id },
     });
+    revalidatePath("/");
     return deleteTask;
   } catch (error) {
     return error;
@@ -189,6 +219,7 @@ export const deleteTasksCompleted = async () => {
     const deleteTask = await prisma.tasks.deleteMany({
       where: { completed: true },
     });
+    revalidatePath("/");
     return deleteTask;
   } catch (error) {
     return error;
