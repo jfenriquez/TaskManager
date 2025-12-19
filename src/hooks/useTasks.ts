@@ -30,6 +30,7 @@ export function useTasks(initialData: Tasks[] = []) {
         : null,
       timerRemainingSeconds: task.timerRemainingSeconds ?? null,
       timerRunning: task.timerRunning ?? false,
+      priority: task.priority as "LOW" | "MEDIUM" | "HIGH" | null,
     }))
   );
 
@@ -46,6 +47,7 @@ export function useTasks(initialData: Tasks[] = []) {
         ? parseInt(newTask.timerMinutes, 10)
         : null,
       timerRunning: false,
+      priority: newTask.priority,
     };
 
     setTasks((prev) => [optimisticTask, ...prev]);
@@ -57,6 +59,7 @@ export function useTasks(initialData: Tasks[] = []) {
           description: optimisticTask.description ?? undefined,
           completed: false,
           timerMinutes: optimisticTask.timerMinutes ?? null,
+          priority: optimisticTask.priority ?? "MEDIUM",
         });
         setTasks((prev) =>
           prev.map((t) => (t.id === tempId ? (created as Task) : t))
@@ -107,6 +110,7 @@ export function useTasks(initialData: Tasks[] = []) {
         title: updatedTask.title,
         description: updatedTask.description ?? undefined,
         timerMinutes: updatedTask.timerMinutes ?? null,
+        priority: updatedTask.priority ?? "MEDIUM",
       },
     }).catch((err) => console.error(err));
   };

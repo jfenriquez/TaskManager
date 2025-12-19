@@ -4,14 +4,18 @@ import { prisma } from "@/src/lib/prisma";
 /////traer session
 import { auth } from "@/src/lib/auth";
 import type { UserWithRole } from "@/src/types/auth";
+import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 
-interface Itask {
+export interface Itask {
   task: {
     id: string;
     title?: string;
     description?: string;
     completed?: boolean;
     timerMinutes?: number | null;
+    priority?: "LOW" | "MEDIUM" | "HIGH";
+    ExecutionDate?: Date | null;
   };
 }
 
@@ -48,13 +52,15 @@ export const getTasks = async () => {
 
     const res = await prisma.tasks.findMany({
       where: { userId: userId.toString() },
+      orderBy: { priority: "desc" },
     });
     if (!res) {
       throw new Error("Task not found");
     }
     return res;
   } catch (error) {
-    return error;
+    console.error(error);
+    throw error;
   }
 };
 
@@ -84,14 +90,13 @@ export const getTotalTimerTasks = async () => {
 };
 
 //////////////////////create task//////////////////////
-import { revalidatePath } from "next/cache";
-import { headers } from "next/headers";
 
 interface TaskInput {
   title: string;
   description?: string | null;
   completed?: boolean;
   timerMinutes: number | null;
+  priority: "LOW" | "MEDIUM" | "HIGH";
 }
 
 export async function createTask(task: TaskInput) {
@@ -111,7 +116,9 @@ export async function createTask(task: TaskInput) {
         title: task.title,
         description: task.description ?? null,
         completed: task.completed ?? false,
+
         timerMinutes: task.timerMinutes ?? null,
+        priority: task.priority,
       },
     });
 
@@ -296,6 +303,7 @@ export async function pauseTaskTimer(taskId: string) {
       timerRunning: false,
       timerRemainingSeconds: remainingSec,
       timerEndsAt: null,
+
       // timerStartedAt stays (puede ser útil históricamente) o lo limpiamos si prefieres:
       // timerStartedAt: null,
     },

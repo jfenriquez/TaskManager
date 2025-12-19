@@ -4,6 +4,7 @@ export interface Task {
   id: string;
   title: string;
   description?: string | null;
+  priority: "LOW" | "MEDIUM" | "HIGH" | null;
   completed: boolean;
   timerMinutes?: number | null;
   timerStartedAt?: string | null;
@@ -16,6 +17,7 @@ export interface NewTaskForm {
   title: string;
   description: string;
   timerMinutes: string;
+  priority: "LOW" | "MEDIUM" | "HIGH";
 }
 
 export interface TaskStats {

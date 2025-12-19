@@ -30,13 +30,13 @@ export default function TaskItem({
 }: TaskItemProps) {
   return (
     <div
-      className={`card ${
+      className={` card ${
         task.completed ? "bg-base-200" : "bg-base-100"
       } shadow-md hover:shadow-lg transition-all duration-200 border-l-4 ${
         task.completed ? "border-success" : "border-primary"
       } rounded-xl`}
     >
-      <div className="card-body p-4">
+      <div className="card-body p-4 ">
         {/* CONTENEDOR RESPONSIVO */}
         <div className="flex flex-col sm:flex-row sm:items-start sm:gap-4">
           {/* Checkbox */}
@@ -60,7 +60,15 @@ export default function TaskItem({
             >
               {task.title}
             </h3>
-
+            {task.priority == "HIGH" ? (
+              <div className="badge badge-error badge-sm shadow-md">Alta</div>
+            ) : task.priority == "MEDIUM" ? (
+              <div className="badge badge-warning badge-sm shadow-md">
+                Media
+              </div>
+            ) : task.priority == "LOW" ? (
+              <div className="badge badge-success badge-sm shadow-md">Baja</div>
+            ) : null}
             {task.description && (
               <p
                 className={`text-sm mt-2 leading-snug break-words ${

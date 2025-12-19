@@ -2,13 +2,7 @@
 
 import React from "react";
 import { motion } from "framer-motion";
-import {
-  FaPlay,
-  FaPause,
-  FaClock,
-  FaHourglassHalf,
-  FaBell,
-} from "react-icons/fa";
+import { FaPlay, FaPause, FaClock, FaHourglassHalf } from "react-icons/fa";
 import { RiResetLeftLine } from "react-icons/ri";
 
 type Timer = {
@@ -44,11 +38,11 @@ export default function TaskTimerControls({
   const isFinished = timer.remainingMs === 0;
 
   return (
-    <div className="mt-3 flex items-center gap-4">
-      {/* Icon + label group */}
-      <div className="flex items-center gap-3">
+    <div className="space-y-3">
+      {/* FILA 1: Tiempo restante y duración - Siempre horizontal */}
+      <div className="flex items-center gap-2 flex-wrap">
         <div
-          className={`p-2 rounded-lg border-2 flex items-center gap-2 transition-all ${
+          className={`p-2 rounded-lg border-2 flex items-center gap-2 transition-all flex-1 min-w-0 ${
             isFinished
               ? "border-base-300 bg-base-200"
               : "border-primary/30 bg-base-100"
@@ -56,12 +50,12 @@ export default function TaskTimerControls({
           title="Temporizador"
         >
           <FaClock
-            className={`w-5 h-5 ${
+            className={`w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0 ${
               isFinished ? "text-base-content/40" : "text-primary"
             }`}
           />
-          <div className="flex flex-col leading-none">
-            <span className="text-xs text-base-content/60">
+          <div className="flex flex-col leading-none min-w-0">
+            <span className="text-[10px] sm:text-xs text-base-content/60 truncate">
               Tiempo restante
             </span>
             <motion.span
@@ -69,7 +63,7 @@ export default function TaskTimerControls({
               initial={{ opacity: 0, y: -4 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ type: "spring", stiffness: 300, damping: 20 }}
-              className={`font-mono text-sm font-semibold ${
+              className={`font-mono text-xs sm:text-sm font-semibold ${
                 isFinished ? "text-base-content/40" : "text-base-content"
               }`}
             >
@@ -78,53 +72,53 @@ export default function TaskTimerControls({
           </div>
         </div>
 
-        {/* duración configurada */}
+        {/* Duración configurada */}
         {task.timerMinutes ? (
-          <div className="badge badge-ghost gap-1">
+          <div className="badge badge-ghost gap-1 flex-shrink-0 text-xs">
             <FaHourglassHalf className="w-3 h-3" />
             <span>{task.timerMinutes} min</span>
           </div>
         ) : null}
       </div>
 
-      {/* Controles */}
-      <div className="flex items-center gap-2 ml-auto">
+      {/* FILA 2: Controles - Botones más compactos en móvil */}
+      <div className="flex items-center gap-2">
         {!timer.running ? (
           <motion.button
             whileTap={{ scale: 0.95 }}
             whileHover={{ scale: 1.03 }}
-            className="btn btn-sm btn-primary gap-2"
+            className="btn btn-xs sm:btn-sm btn-primary gap-1 sm:gap-2 flex-1 sm:flex-initial"
             onClick={() => handleStartTimer(task.id)}
             aria-label="Empezar temporizador"
             title="Empezar"
           >
             <FaPlay className="w-3 h-3" />
-            <span className="hidden sm:inline">Empezar</span>
+            <span className="text-xs sm:text-sm">Empezar</span>
           </motion.button>
         ) : (
           <motion.button
             whileTap={{ scale: 0.95 }}
             whileHover={{ scale: 1.03 }}
-            className="btn btn-sm btn-warning gap-2"
+            className="btn btn-xs sm:btn-sm btn-warning gap-1 sm:gap-2 flex-1 sm:flex-initial"
             onClick={() => handlePauseTimer(task.id)}
             aria-label="Pausar temporizador"
             title="Pausar"
           >
             <FaPause className="w-3 h-3" />
-            <span className="hidden sm:inline">Pausar</span>
+            <span className="text-xs sm:text-sm">Pausar</span>
           </motion.button>
         )}
 
         <motion.button
           whileTap={{ scale: 0.95 }}
           whileHover={{ scale: 1.03 }}
-          className="btn btn-sm btn-info gap-2"
+          className="btn btn-xs sm:btn-sm btn-info gap-1 sm:gap-2 flex-1 sm:flex-initial"
           onClick={() => handleStopTimer(task.id)}
           aria-label="Detener temporizador"
           title="Detener"
         >
-          <RiResetLeftLine className="w-4 h-4" />
-          <span className="hidden sm:inline">Reiniciar</span>
+          <RiResetLeftLine className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+          <span className="text-xs sm:text-sm">Reiniciar</span>
         </motion.button>
       </div>
     </div>

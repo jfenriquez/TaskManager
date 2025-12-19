@@ -1,0 +1,5 @@
+-- CreateEnum
+CREATE TYPE "Priority" AS ENUM ('LOW', 'MEDIUM', 'HIGH');
+
+-- AlterTable
+ALTER TABLE "Tasks" ALTER COLUMN "ExecutionDate" SET DEFAULT CURRENT_TIMESTAMP;

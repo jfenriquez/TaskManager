@@ -83,6 +83,16 @@ export default function TaskModal({
                 )
               }
             />
+            {/* PRIOPRIDAD */}
+            <select
+              className="select select-bordered w-full bg-base-200 text-base-content mt-4"
+              value={task.priority ?? ""}
+              onChange={(e) => onChange("priority", e.target.value)}
+            >
+              <option value="LOW">Prioridad Baja🌋</option>
+              <option value="MEDIUM">Prioridad Media🌋🌋</option>
+              <option value="HIGH">Prioridad alta🔥🌋🌋🌋</option>
+            </select>
           </div>
         </div>
         <div className="modal-action">

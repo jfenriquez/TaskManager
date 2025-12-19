@@ -36,6 +36,7 @@ export default function TasksUI({ data = [] }: TasksProps) {
     title: "",
     description: "",
     timerMinutes: "",
+    priority: "MEDIUM",
   });
   const [editingTask, setEditingTask] = useState<Task | null>(null);
 
@@ -127,7 +128,12 @@ export default function TasksUI({ data = [] }: TasksProps) {
 
   const onAddTask = () => {
     handleAddTask(newTask);
-    setNewTask({ title: "", description: "", timerMinutes: "" });
+    setNewTask({
+      title: "",
+      description: "",
+      timerMinutes: "",
+      priority: "MEDIUM",
+    });
     setShowAddModal(false);
   };
 
@@ -171,24 +177,35 @@ export default function TasksUI({ data = [] }: TasksProps) {
 
   return (
     <div className="min-h-screen bg-base-200 transition-colors duration-200">
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
-        <TaskHeader
-          userName={user?.name ?? undefined}
-          stats={stats}
-          onDeleteCompleted={deleteAllCompleted}
-          onRequestNotifications={handleRequestNotifications}
-        />
+      <div className="container mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8 max-w-7xl">
+        {/* Header con mejor responsividad */}
+        <div className="mb-4 sm:mb-6 md:mb-8">
+          <TaskHeader
+            userName={user?.name ?? undefined}
+            stats={stats}
+            onDeleteCompleted={deleteAllCompleted}
+            onRequestNotifications={handleRequestNotifications}
+          />
+        </div>
 
-        <TaskStatsComponent stats={stats} />
+        {/* Stats con layout responsive */}
+        <div className="mb-4 sm:mb-6">
+          <TaskStatsComponent stats={stats} />
+        </div>
 
-        <div className="card bg-base-100 shadow-xl transition-colors duration-200">
-          <div className="card-body">
-            <TaskFilter
-              filter={filter}
-              onFilterChange={setFilter}
-              onAddTask={() => setShowAddModal(true)}
-            />
+        {/* Card principal con mejor padding responsive */}
+        <div className="card bg-base-100 shadow-lg sm:shadow-xl transition-colors duration-200">
+          <div className="card-body p-4 sm:p-6 md:p-8">
+            {/* Filter con botones responsive */}
+            <div className="mb-4 sm:mb-6">
+              <TaskFilter
+                filter={filter}
+                onFilterChange={setFilter}
+                onAddTask={() => setShowAddModal(true)}
+              />
+            </div>
 
+            {/* Lista de tareas */}
             <TaskList
               tasks={filteredTasks}
               counts={counts}
@@ -203,6 +220,7 @@ export default function TasksUI({ data = [] }: TasksProps) {
           </div>
         </div>
 
+        {/* Modales con mejor comportamiento responsive */}
         <TaskModal
           isOpen={showAddModal}
           mode="add"

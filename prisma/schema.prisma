@@ -7,22 +7,28 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum PriorityEnum {
+  LOW
+  MEDIUM
+  HIGH
+}
+
 model Tasks {
-  id                    String    @id @default(cuid())
+  id                    String       @id @default(cuid())
   title                 String
   description           String?
-  completed             Boolean   @default(false)
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
+  completed             Boolean      @default(false)
+  createdAt             DateTime     @default(now())
+  updatedAt             DateTime     @updatedAt
   userId                String
-  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user                  User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   timerMinutes          Int? // duración configurada por defecto (minutos)
   timerStartedAt        DateTime? // cuándo se inició el temporizador
   timerEndsAt           DateTime? // cuándo debería terminar (null si está pausado o no iniciado)
   timerRemainingSeconds Int? // si está pausado, los segundos restantes
-  timerRunning          Boolean   @default(false) // true si está corriendo
-  priority              String?   @default("MEDIUM") // prioridad de la tarea (LOW, MEDIUM, HIGH)
-  ExecutionDate         DateTime? // fecha de vencimiento de la tarea
+  timerRunning          Boolean      @default(false) // true si está corriendo
+  priority              PriorityEnum @default(MEDIUM) // prioridad de la tarea (LOW, MEDIUM, HIGH)
+  ExecutionDate         DateTime?    @default(now()) // fecha de vencimiento de la tarea
 }
 
 model User {
