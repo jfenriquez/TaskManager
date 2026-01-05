@@ -1,7 +1,7 @@
 "use server";
 
 import { Tasks } from "@prisma/client";
-import { getTasks } from "../actions/taskActions";
+import { getTasksXDay } from "../actions/taskActions";
 import TasksUI from "@/src/components/tasks/TasksUI";
 import { headers } from "next/headers";
 import { auth } from "../lib/auth";
@@ -13,10 +13,20 @@ import TaskTotalTime from "../components/tasks/TaskTotalTime";
 import MarqueeTicker from "../components/MarqueeTicker";
 
 export default async function TaskManager() {
-  const tasks = await getTasks();
   const session = await auth.api.getSession({
     headers: await headers(),
   });
+
+  // Si no hay sesión, no intentes cargar las tareas
+  let tasks: Tasks[] = [];
+  if (session?.user?.id) {
+    try {
+      tasks = await getTasksXDay();
+    } catch (error) {
+      console.error("Error al cargar las tareas:", error);
+      tasks = [];
+    }
+  }
 
   return (
     <div className="task-manager min-h-screen bg-base-200">

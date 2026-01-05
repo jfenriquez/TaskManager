@@ -1,6 +1,6 @@
-// app/tasks/page.tsx o donde esté
+export const dynamic = "force-dynamic";
 import { getTasks } from "@/src/actions/taskActions";
-import TasksTable from "@/src/components/tasks/TasksTable";
+import TasksTableWrapper from "@/src/components/tasks/TasksTableWrapper";
 
 export default async function TasksPage() {
   const tasks = await getTasks(); // tu función server
@@ -8,7 +8,7 @@ export default async function TasksPage() {
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-3xl font-bold mb-6">Mis Tareas</h1>
-      <TasksTable tasks={tasks} /> {/* ¡Sin onUpdateTask! */}
+      <TasksTableWrapper initialTasks={tasks} />
     </div>
   );
 }

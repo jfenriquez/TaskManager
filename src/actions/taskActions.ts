@@ -6,6 +6,8 @@ import { auth } from "@/src/lib/auth";
 import type { UserWithRole } from "@/src/types/auth";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
+import { Tasks } from "@prisma/client";
+//import { Tasks } from "@prisma/client";
 
 export interface Itask {
   task: {
@@ -25,21 +27,26 @@ export async function getUserFromSession(): Promise<UserWithRole | null> {
     headers: await headers(), // importantísimo: pasar headers()
     ///cookies: await cookies(), // importantísimo: pasar cookies()
   });
-
   // Devuelve el usuario tipado o null
   return (session?.user as UserWithRole) ?? null;
 }
 
 async function getUserIdFromSession(): Promise<string | null> {
-  // obtener sesión desde Better Auth en server
-  const session = await auth.api.getSession({
-    headers: await headers(), // importantísimo: pasar headers()
-    ///cookies: await cookies(), // importantísimo: pasar cookies()
-  });
+  try {
+    // obtener sesión desde Better Auth en server
+    const session = await auth.api.getSession({
+      headers: await headers(), // importantísimo: pasar headers()
+      ///cookies: await cookies(), // importantísimo: pasar cookies()
+    });
 
-  const userId =
-    session?.user?.id ?? (session as unknown as { userId?: string })?.userId;
-  return userId || null;
+    const userId =
+      session?.user?.id ?? (session as unknown as { userId?: string })?.userId;
+
+    return userId || null;
+  } catch (error) {
+    console.error("Error al obtener userId de la sesión:", error);
+    return null;
+  }
 }
 
 //////get
@@ -49,10 +56,12 @@ export const getTasks = async () => {
     if (!userId) {
       throw new Error("No autenticado: no hay userId en la sesión");
     }
-
     const res = await prisma.tasks.findMany({
-      where: { userId: userId.toString() },
-      orderBy: { priority: "desc" },
+      where: {
+        userId: userId.toString(),
+      },
+      orderBy: { ExecutionDate: "desc" },
+      //{ priority: "desc" },
     });
     if (!res) {
       throw new Error("Task not found");
@@ -63,6 +72,78 @@ export const getTasks = async () => {
     throw error;
   }
 };
+////get tasks x day
+export const getTasksXDay = async () => {
+  try {
+    const userId = await getUserIdFromSession();
+    if (!userId) {
+      throw new Error("No autenticado: no hay userId en la sesión");
+    }
+
+    // Crear rango del día actual
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const endOfDay = new Date();
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const res = await prisma.tasks.findMany({
+      where: {
+        userId: userId.toString(),
+        OR: [
+          { ExecutionDate: null },
+          {
+            ExecutionDate: {
+              gte: startOfDay, // mayor o igual al inicio del día
+              lte: endOfDay, // menor o igual al final del día
+            },
+          },
+        ],
+      },
+      orderBy: { ExecutionDate: "desc" },
+      //orderBy: { priority: "desc" },
+    });
+
+    if (!res) {
+      throw new Error("Task not found");
+    }
+    return res;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
+
+/////importTask
+export async function importTasks(tasks: Partial<Tasks>[]) {
+  const userId = await getUserIdFromSession();
+  if (!userId) {
+    throw new Error("No autenticado: no hay userId en la sesión");
+  }
+  try {
+    // Crear múltiples tareas en una transacción
+    const createdTasks = await prisma.$transaction(
+      tasks.map((task) =>
+        prisma.tasks.create({
+          data: {
+            title: task.title || "Sin título",
+            description: task.description || null,
+            completed: task.completed || false,
+            priority: task.priority || "MEDIUM",
+            timerMinutes: task.timerMinutes || null,
+            ExecutionDate: task.ExecutionDate || null,
+            userId: userId, // Ajusta según tu modelo
+          },
+        })
+      )
+    );
+    revalidatePath("/TasksTable"); // ajusta la ruta según tu app
+    return { success: true, count: createdTasks.length };
+  } catch (error) {
+    console.error("Error al importar tareas:", error);
+    throw new Error("Error al importar las tareas");
+  }
+}
 
 // getTotalTimerTasks
 export const getTotalTimerTasks = async () => {
@@ -71,7 +152,14 @@ export const getTotalTimerTasks = async () => {
     if (!userId) throw new Error("No autenticado");
 
     const tasks = await prisma.tasks.findMany({
-      where: { userId: userId.toString(), completed: false },
+      where: {
+        userId: userId.toString(),
+        completed: false,
+        ExecutionDate: {
+          gte: new Date(new Date().setHours(0, 0, 0, 0)),
+          lte: new Date(new Date().setHours(23, 59, 59, 999)),
+        },
+      },
       select: { timerMinutes: true }, // solo traemos lo necesario
     });
 

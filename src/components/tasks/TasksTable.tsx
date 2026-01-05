@@ -10,20 +10,40 @@ import {
   SortingState,
   useReactTable,
 } from "@tanstack/react-table";
-import { useState, useTransition } from "react";
-import { format } from "date-fns";
+import { useState, useTransition, useRef } from "react";
+import { format, parse } from "date-fns";
 import { es } from "date-fns/locale";
-import { ArrowUp, ArrowDown, Download } from "lucide-react";
+import { ArrowUp, ArrowDown, Download, Upload } from "lucide-react";
 import * as XLSX from "xlsx";
-import { updateTask } from "@/src/actions/taskActions";
+import { updateTask, deleteTaskXid } from "@/src/actions/taskActions";
+import { Trash2 } from "lucide-react";
 
+import { FaTrash } from "react-icons/fa";
+import { useTasks } from "@/src/hooks/useTasks";
 interface TasksTableProps {
   tasks?: Tasks[];
+  onImportTasks?: (tasks: Partial<Tasks>[]) => Promise<void>;
 }
 
-export default function TasksTable({ tasks = [] }: TasksTableProps) {
+export default function TasksTable({
+  tasks = [],
+  onImportTasks,
+}: TasksTableProps) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [isPending, startTransition] = useTransition();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const { deleteAllCompleted } = useTasks();
+
+  const onDeleteCompleted = async () => {
+    startTransition(async () => {
+      try {
+        await deleteAllCompleted();
+      } catch (error) {
+        console.error("Error al eliminar tareas completadas:", error);
+      }
+    });
+  };
 
   const getPriorityBadge = (priority: string | null) => {
     const p = priority || "MEDIUM";
@@ -94,6 +114,136 @@ export default function TasksTable({ tasks = [] }: TasksTableProps) {
     XLSX.writeFile(wb, fileName);
   };
 
+  // Parsear tiempo desde formato "Xh Ym" o "Xm"
+  const parseTime = (timeStr: string): number | null => {
+    if (!timeStr || timeStr === "—") return null;
+
+    const hourMatch = timeStr.match(/(\d+)h/);
+    const minMatch = timeStr.match(/(\d+)m/);
+
+    const hours = hourMatch ? parseInt(hourMatch[1]) : 0;
+    const minutes = minMatch ? parseInt(minMatch[1]) : 0;
+
+    return hours * 60 + minutes;
+  };
+
+  // Parsear fecha desde formato "dd/MM/yyyy"
+  const parseDate = (dateStr: string): Date | null => {
+    if (!dateStr) return null;
+    try {
+      return parse(dateStr, "dd/MM/yyyy", new Date());
+    } catch {
+      return null;
+    }
+  };
+
+  // Importar desde Excel
+  const handleImportExcel = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const data = await file.arrayBuffer();
+      const workbook = XLSX.read(data, { type: "array" });
+      const sheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[sheetName];
+      const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+      // Validar y transformar datos
+      const importedTasks: Partial<Tasks>[] = jsonData.map((row: unknown) => {
+        const rowData = row as Record<string, unknown>;
+        return {
+          title: (rowData["Tarea"] as string) || "",
+          description: (rowData["Descripción"] as string | null) || null,
+          completed:
+            (rowData["Completada"] as string)?.toLowerCase() === "sí" ||
+            (rowData["Completada"] as string)?.toLowerCase() === "si",
+          priority: ((rowData["Prioridad"] as string)?.toUpperCase() ||
+            "MEDIUM") as "HIGH" | "MEDIUM" | "LOW",
+          timerMinutes: parseTime(rowData["Tiempo estimado"] as string),
+          ExecutionDate: parseDate(rowData["Fecha de ejecución"] as string),
+        };
+      });
+
+      // Filtrar tareas sin título
+      const validTasks = importedTasks.filter(
+        (task) => task.title && task.title.trim() !== ""
+      );
+
+      if (validTasks.length === 0) {
+        showToast("No se encontraron tareas válidas en el archivo", "error");
+        return;
+      }
+
+      // Llamar a la función de importación si existe
+      if (onImportTasks) {
+        startTransition(async () => {
+          try {
+            await onImportTasks(validTasks);
+            showToast(
+              `${validTasks.length} tarea(s) importada(s) correctamente`,
+              "success"
+            );
+          } catch (error) {
+            showToast("Error al importar las tareas", "error");
+          }
+        });
+      } else {
+        showToast(
+          "La funcionalidad de importación no está configurada",
+          "error"
+        );
+      }
+    } catch (error) {
+      console.error("Error al procesar el archivo:", error);
+      showToast("Error al leer el archivo Excel", "error");
+    } finally {
+      // Limpiar el input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
+
+  const handleToggleComplete = async (taskId: string, completed: boolean) => {
+    startTransition(async () => {
+      try {
+        await updateTask({
+          task: { id: taskId, completed: !completed },
+        });
+        showToast(
+          !completed
+            ? "Tarea marcada como completada"
+            : "Tarea marcada como pendiente",
+          "success"
+        );
+      } catch (error) {
+        showToast("Error al actualizar el estado de la tarea", "error");
+      }
+    });
+  };
+
+  const handleDeleteTask = async (taskId: string) => {
+    if (!confirm("¿Estás seguro de que deseas eliminar esta tarea?")) {
+      return;
+    }
+
+    startTransition(async () => {
+      try {
+        await deleteTaskXid(taskId);
+        showToast("Tarea eliminada correctamente", "success");
+      } catch (error) {
+        showToast("Error al eliminar la tarea", "error");
+      }
+    });
+  };
+
   const columns: ColumnDef<Tasks>[] = [
     {
       accessorKey: "completed",
@@ -103,7 +253,10 @@ export default function TasksTable({ tasks = [] }: TasksTableProps) {
           type="checkbox"
           checked={row.original.completed}
           className="checkbox checkbox-sm checkbox-primary"
-          readOnly
+          disabled={isPending}
+          onChange={() =>
+            handleToggleComplete(row.original.id, row.original.completed)
+          }
         />
       ),
       size: 50,
@@ -233,6 +386,21 @@ export default function TasksTable({ tasks = [] }: TasksTableProps) {
       ),
       enableSorting: false,
     },
+    {
+      id: "actions",
+      header: "Acciones",
+      cell: ({ row }) => (
+        <button
+          onClick={() => handleDeleteTask(row.original.id)}
+          disabled={isPending}
+          className="btn btn-ghost btn-sm text-error hover:bg-error hover:text-white"
+          title="Eliminar tarea"
+        >
+          <Trash2 className="w-4 h-4" />
+        </button>
+      ),
+      enableSorting: false,
+    },
   ];
 
   const table = useReactTable({
@@ -246,8 +414,35 @@ export default function TasksTable({ tasks = [] }: TasksTableProps) {
 
   return (
     <div className="space-y-4">
-      {/* Botón Exportar Excel */}
-      <div className="flex justify-end">
+      <div>
+        <button
+          onClick={onDeleteCompleted}
+          className="btn btn-error btn-md gap-2"
+        >
+          <FaTrash size={16} />
+          Eliminar completadas
+        </button>
+      </div>
+      {/* Input oculto para seleccionar archivo */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".xlsx,.xls"
+        onChange={handleFileChange}
+        className="hidden"
+      />
+
+      {/* Botones Exportar e Importar */}
+      <div className="flex justify-end gap-2">
+        <button
+          onClick={handleImportExcel}
+          disabled={isPending}
+          className="btn btn-secondary btn-md gap-2 shadow-lg"
+        >
+          <Upload className="w-5 h-5" />
+          Importar Excel
+        </button>
+
         <button
           onClick={handleExportExcel}
           disabled={tasks.length === 0 || isPending}
@@ -342,7 +537,10 @@ export default function TasksTable({ tasks = [] }: TasksTableProps) {
                       type="checkbox"
                       checked={task.completed}
                       className="checkbox checkbox-primary mt-1"
-                      readOnly
+                      disabled={isPending}
+                      onChange={() =>
+                        handleToggleComplete(task.id, task.completed)
+                      }
                     />
                     <div className={getPriorityBadge(task.priority)}>
                       {task.priority || "MEDIUM"}
@@ -376,6 +574,17 @@ export default function TasksTable({ tasks = [] }: TasksTableProps) {
                           : "—"}
                       </span>
                     </div>
+                  </div>
+
+                  <div className="mt-4 flex gap-2">
+                    <button
+                      onClick={() => handleDeleteTask(task.id)}
+                      disabled={isPending}
+                      className="btn btn-ghost btn-sm text-error hover:bg-error hover:text-white flex-1"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      Eliminar
+                    </button>
                   </div>
                 </div>
               </div>
