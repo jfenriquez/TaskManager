@@ -151,19 +151,44 @@ export const getTotalTimerTasks = async () => {
     const userId = await getUserIdFromSession();
     if (!userId) throw new Error("No autenticado");
 
+    // Problema: new Date() usa la hora local del servidor
+    // Si tu servidor está en UTC pero tu zona horaria es UTC-5 (Bogotá),
+    // "hoy" en tu zona no coincide con "hoy" en UTC
+
+    // Solución: Crear las fechas correctamente
+    const now = new Date();
+    const startOfDay = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+      0,
+      0,
+      0,
+      0
+    );
+    const endOfDay = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+      23,
+      59,
+      59,
+      999
+    );
+
     const tasks = await prisma.tasks.findMany({
       where: {
         userId: userId.toString(),
         completed: false,
         ExecutionDate: {
-          gte: new Date(new Date().setHours(0, 0, 0, 0)),
-          lte: new Date(new Date().setHours(23, 59, 59, 999)),
+          gte: startOfDay,
+          lte: endOfDay,
         },
       },
-      select: { timerMinutes: true }, // solo traemos lo necesario
+      select: { timerMinutes: true },
     });
 
-    if (!tasks) return 0;
+    if (!tasks || tasks.length === 0) return 0;
 
     const total = tasks.reduce(
       (acc, task) => acc + (task.timerMinutes ?? 0),
