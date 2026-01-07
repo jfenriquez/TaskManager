@@ -8,7 +8,7 @@ import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { Tasks } from "@prisma/client";
 //import { Tasks } from "@prisma/client";
-
+import { getStartOfDay, getEndOfDay } from "@/src/utils/dateHelpers";
 export interface Itask {
   task: {
     id: string;
@@ -31,7 +31,7 @@ export async function getUserFromSession(): Promise<UserWithRole | null> {
   return (session?.user as UserWithRole) ?? null;
 }
 
-async function getUserIdFromSession(): Promise<string | null> {
+export async function getUserIdFromSession(): Promise<string | null> {
   try {
     // obtener sesión desde Better Auth en server
     const session = await auth.api.getSession({
@@ -77,39 +77,61 @@ export const getTasksXDay = async () => {
   try {
     const userId = await getUserIdFromSession();
     if (!userId) {
-      throw new Error("No autenticado: no hay userId en la sesión");
+      throw new Error("No autenticado");
     }
 
-    // Crear rango del día actual
-    const startOfDay = new Date();
-    startOfDay.setHours(0, 0, 0, 0);
-
-    const endOfDay = new Date();
-    endOfDay.setHours(23, 59, 59, 999);
-
-    const res = await prisma.tasks.findMany({
+    // Obtener TODAS las tareas del usuario
+    const allTasks = await prisma.tasks.findMany({
       where: {
         userId: userId.toString(),
-        OR: [
-          { ExecutionDate: null },
-          {
-            ExecutionDate: {
-              gte: startOfDay, // mayor o igual al inicio del día
-              lte: endOfDay, // menor o igual al final del día
-            },
-          },
-        ],
       },
-      orderBy: { ExecutionDate: "desc" },
-      //orderBy: { priority: "desc" },
+      orderBy: [
+        { ExecutionDate: "asc" },
+        { priority: "desc" },
+        { createdAt: "asc" },
+      ],
     });
 
-    if (!res) {
-      throw new Error("Task not found");
-    }
-    return res;
+    // Obtener timezone del usuario
+    const user = await prisma.user.findUnique({
+      where: { id: userId.toString() },
+      select: { timezone: true },
+    });
+
+    const userTimezone = user?.timezone || "UTC";
+    console.log("🌍 Zona horaria del usuario:", userTimezone);
+    // Fecha de hoy en la zona del usuario
+    const today = new Date().toLocaleDateString("en-CA", {
+      timeZone: userTimezone,
+    });
+
+    console.log("🔍 Filtrando tareas para:", today);
+
+    // Filtrar en JavaScript
+    const tasksToday = allTasks.filter((task) => {
+      // Incluir tareas sin fecha
+      if (!task.ExecutionDate) return true;
+
+      // Convertir ExecutionDate a string de fecha en la zona del usuario
+      const taskDate = task.ExecutionDate.toLocaleDateString("en-CA", {
+        timeZone: userTimezone,
+      });
+
+      return taskDate === today;
+    });
+
+    console.log("✅ Tareas encontradas:", tasksToday.length);
+    console.log(
+      "📋 Tareas:",
+      tasksToday.map((t) => ({
+        title: t.title,
+        date: t.ExecutionDate?.toISOString(),
+      }))
+    );
+
+    return tasksToday;
   } catch (error) {
-    console.error(error);
+    console.error("❌ Error en getTasksXDay:", error);
     throw error;
   }
 };
@@ -145,60 +167,71 @@ export async function importTasks(tasks: Partial<Tasks>[]) {
   }
 }
 
-// getTotalTimerTasks
 export const getTotalTimerTasks = async () => {
   try {
     const userId = await getUserIdFromSession();
-    if (!userId) throw new Error("No autenticado");
+    if (!userId) {
+      throw new Error("No autenticado");
+    }
 
-    // Problema: new Date() usa la hora local del servidor
-    // Si tu servidor está en UTC pero tu zona horaria es UTC-5 (Bogotá),
-    // "hoy" en tu zona no coincide con "hoy" en UTC
-
-    // Solución: Crear las fechas correctamente
-    const now = new Date();
-    const startOfDay = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate(),
-      0,
-      0,
-      0,
-      0
-    );
-    const endOfDay = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate(),
-      23,
-      59,
-      59,
-      999
-    );
-
-    const tasks = await prisma.tasks.findMany({
+    // Obtener TODAS las tareas del usuario
+    const allTasks = await prisma.tasks.findMany({
       where: {
         userId: userId.toString(),
+        timerMinutes: { not: null },
         completed: false,
-        ExecutionDate: {
-          gte: startOfDay,
-          lte: endOfDay,
-        },
       },
-      select: { timerMinutes: true },
+      orderBy: [
+        { ExecutionDate: "asc" },
+        { priority: "desc" },
+        { createdAt: "asc" },
+      ],
     });
 
-    if (!tasks || tasks.length === 0) return 0;
+    // Obtener timezone del usuario
+    const user = await prisma.user.findUnique({
+      where: { id: userId.toString() },
+      select: { timezone: true },
+    });
 
-    const total = tasks.reduce(
-      (acc, task) => acc + (task.timerMinutes ?? 0),
-      0
+    const userTimezone = user?.timezone || "UTC";
+    console.log("🌍 Zona horaria del usuario:", userTimezone);
+    // Fecha de hoy en la zona del usuario
+    const today = new Date().toLocaleDateString("en-CA", {
+      timeZone: userTimezone,
+    });
+
+    console.log("🔍 Filtrando tareas para:", today);
+
+    // Filtrar en JavaScript
+    const tasksToday = allTasks.filter((task) => {
+      // Incluir tareas sin fecha
+      if (!task.ExecutionDate) return true;
+
+      // Convertir ExecutionDate a string de fecha en la zona del usuario
+      const taskDate = task.ExecutionDate.toLocaleDateString("en-CA", {
+        timeZone: userTimezone,
+      });
+
+      return taskDate === today;
+    });
+
+    console.log("✅ Tareas encontradas:", tasksToday.length);
+    console.log(
+      "📋 Tiempos:",
+      tasksToday.map((t) => ({
+        timer: t.timerMinutes,
+      }))
     );
 
+    const total = tasksToday.reduce((sum, task) => {
+      return sum + (task.timerMinutes || 0);
+    }, 0);
+    console.log("⏱️ Total de minutos:", total);
     return total;
   } catch (error) {
-    console.error(error);
-    throw new Error("Error obteniendo total de tiempo");
+    console.error("❌ Error obteniendo total de tiempo:", error);
+    return 0;
   }
 };
 

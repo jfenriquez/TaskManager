@@ -9,6 +9,8 @@ import {
   FaFlag,
   FaCalendarCheck,
 } from "react-icons/fa";
+import { useUserTimezone } from "@/src/hooks/useUserTimezone";
+import TimezoneSelector from "../TimezoneSelector";
 
 export default function TaskTotalClient({ minutes }: { minutes: number }) {
   const [now, setNow] = useState(new Date());
@@ -30,6 +32,7 @@ export default function TaskTotalClient({ minutes }: { minutes: number }) {
     return `${h} h ${min} min`;
   }
 
+  const { timezone } = useUserTimezone();
   function getEstimatedFinishTime() {
     const finish = new Date(now.getTime() + minutes * 60 * 1000);
 
@@ -52,7 +55,13 @@ export default function TaskTotalClient({ minutes }: { minutes: number }) {
       <div className="mb-6">
         <PlaylistPlayer />
       </div>
-
+      <TimezoneSelector />
+      <p className="text-sm text-gray-500">
+        Mostrando tareas para:{" "}
+        {new Date().toLocaleDateString("es-ES", {
+          timeZone: timezone,
+        })}
+      </p>
       {/* Stats Cards */}
       <div className="space-y-3">
         {/* Reloj en vivo */}
@@ -116,7 +125,6 @@ export default function TaskTotalClient({ minutes }: { minutes: number }) {
           </div>
         </div>
       </div>
-
       {/* Mensaje motivacional */}
       <div className="alert alert-success shadow-sm">
         <FaCalendarCheck className="text-lg" />

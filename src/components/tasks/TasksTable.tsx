@@ -333,12 +333,12 @@ export default function TasksTable({
       header: "Ejecución",
       cell: ({ row }) => {
         const dateValue = row.original.ExecutionDate
-          ? format(new Date(row.original.ExecutionDate), "yyyy-MM-dd")
+          ? format(new Date(row.original.ExecutionDate), "yyyy-MM-dd'T'HH:mm")
           : "";
         return (
           <div className="text-center">
             <input
-              type="date"
+              type="datetime-local"
               defaultValue={dateValue}
               disabled={isPending}
               className="input input-bordered input-sm w-full max-w-xs"
@@ -563,7 +563,7 @@ export default function TasksTable({
                       </span>
                     </div>
                     <div>
-                      <span className="text-base-content/50">Ejecución:</span>
+                      <span className="text-base-content/50">ón:</span>
                       <span className="ml-2">
                         {task.ExecutionDate
                           ? format(
