@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Play, Pause, SkipBack, SkipForward } from "lucide-react";
+import { Play, Pause, SkipBack, SkipForward, Volume2 } from "lucide-react";
+import { motion } from "framer-motion";
 
 const tracks = [
   {
@@ -27,6 +28,7 @@ export default function AudioPlayer() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
   const [progress, setProgress] = useState(0);
+  const [volume, setVolume] = useState(1);
   const currentTrack = tracks[currentTrackIndex];
 
   // Play / Pause
@@ -84,6 +86,13 @@ export default function AudioPlayer() {
     return () => audio.removeEventListener("ended", handleEnded);
   }, []);
 
+  // Set volume
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.volume = volume;
+    }
+  }, [volume]);
+
   const handleScrub = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!audioRef.current) return;
 
@@ -113,6 +122,28 @@ export default function AudioPlayer() {
             style={{ width: `${progress}%` }}
           />
         </div>
+
+        {/* Volume Control */}
+        <motion.div
+          className="flex items-center gap-3 w-full"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <Volume2 size={20} className="text-base-content" />
+          <motion.input
+            type="range"
+            min="0"
+            max="1"
+            step="0.01"
+            value={volume}
+            onChange={(e) => setVolume(parseFloat(e.target.value))}
+            className="range range-primary flex-1"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            transition={{ type: "spring", stiffness: 300 }}
+          />
+        </motion.div>
 
         {/* Controls */}
         <div className="card-actions justify-center">
