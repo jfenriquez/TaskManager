@@ -11,6 +11,7 @@ export interface Task {
   timerEndsAt?: string | null;
   timerRemainingSeconds?: number | null;
   timerRunning?: boolean | null;
+  categoryId?: string | null;
 }
 
 export interface NewTaskForm {
@@ -18,6 +19,7 @@ export interface NewTaskForm {
   description: string;
   timerMinutes: string;
   priority: "LOW" | "MEDIUM" | "HIGH";
+  categoryId: string;
 }
 
 export interface TaskStats {

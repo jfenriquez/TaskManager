@@ -13,6 +13,17 @@ enum PriorityEnum {
   HIGH
 }
 
+model Category {
+  id        String  @id @default(cuid())
+  name      String
+  color     String  @default("#3b82f6")
+  userId    String
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tasks     Tasks[]
+
+  @@map("category")
+}
+
 model Tasks {
   id                    String       @id @default(cuid())
   title                 String
@@ -22,13 +33,15 @@ model Tasks {
   updatedAt             DateTime     @updatedAt
   userId                String
   user                  User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  timerMinutes          Int? // duración configurada por defecto (minutos)
-  timerStartedAt        DateTime? // cuándo se inició el temporizador
-  timerEndsAt           DateTime? // cuándo debería terminar (null si está pausado o no iniciado)
-  timerRemainingSeconds Int? // si está pausado, los segundos restantes
-  timerRunning          Boolean      @default(false) // true si está corriendo
-  priority              PriorityEnum @default(MEDIUM) // prioridad de la tarea (LOW, MEDIUM, HIGH)
-  ExecutionDate         DateTime?    @default(now()) // fecha de vencimiento de la tarea
+  timerMinutes          Int?
+  timerStartedAt        DateTime?
+  timerEndsAt           DateTime?
+  timerRemainingSeconds Int?
+  timerRunning          Boolean      @default(false)
+  priority              PriorityEnum @default(MEDIUM)
+  ExecutionDate         DateTime?    @default(now())
+  categoryId            String?
+  category              Category?    @relation(fields: [categoryId], references: [id], onDelete: SetNull)
 }
 
 model User {
@@ -40,6 +53,7 @@ model User {
   updatedAt     DateTime  @default(now()) @updatedAt
   emailVerified Boolean   @default(false)
   tasks         Tasks[]
+  categories    Category[]
   accounts      Account[]
   sessions      Session[]
   role          Role      @default(USER)

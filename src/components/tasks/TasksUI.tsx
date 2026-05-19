@@ -2,7 +2,7 @@
 
 import { useAuth } from "@/src/hooks/useAuth";
 import { Tasks } from "@prisma/client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useTasks } from "@/src/hooks/useTasks";
 import { useTimer } from "@/src/hooks/useTimer";
 import { useNotifications } from "@/src/hooks/useNotifications";
@@ -18,6 +18,7 @@ import TaskList from "@/src/components/tasks/TaskList";
 import TaskModal from "@/src/components/tasks/TaskModal";
 import { Task, NewTaskForm, FilterType } from "@/src/types/task.types";
 import TaskTotalTime from "./TaskTotalTime";
+import { getCategories } from "@/src/actions/taskActions";
 
 interface TasksProps {
   data?: Tasks[];
@@ -32,11 +33,22 @@ export default function TasksUI({ data = [] }: TasksProps) {
   const [showEditModal, setShowEditModal] = useState(false);
   const [highlightTask, setHighlightTask] = useState<string | null>(null);
 
+  const [categories, setCategories] = useState<
+    { id: string; name: string; color: string }[]
+  >([]);
+
+  useEffect(() => {
+    getCategories()
+      .then(setCategories)
+      .catch(() => {});
+  }, []);
+
   const [newTask, setNewTask] = useState<NewTaskForm>({
     title: "",
     description: "",
     timerMinutes: "",
     priority: "MEDIUM",
+    categoryId: "",
   });
   const [editingTask, setEditingTask] = useState<Task | null>(null);
 
@@ -133,6 +145,7 @@ export default function TasksUI({ data = [] }: TasksProps) {
       description: "",
       timerMinutes: "",
       priority: "MEDIUM",
+      categoryId: "",
     });
     setShowAddModal(false);
   };
@@ -209,6 +222,7 @@ export default function TasksUI({ data = [] }: TasksProps) {
             <TaskList
               tasks={filteredTasks}
               counts={counts}
+              categories={categories}
               formatRemaining={formatRemaining}
               onToggleComplete={toggleComplete}
               onEdit={startEdit}
@@ -225,6 +239,7 @@ export default function TasksUI({ data = [] }: TasksProps) {
           isOpen={showAddModal}
           mode="add"
           task={newTask}
+          categories={categories}
           isPending={isPending}
           onClose={() => setShowAddModal(false)}
           onSave={onAddTask}
@@ -236,6 +251,7 @@ export default function TasksUI({ data = [] }: TasksProps) {
             isOpen={showEditModal}
             mode="edit"
             task={editingTask}
+            categories={categories}
             onClose={() => setShowEditModal(false)}
             onSave={onSaveEdit}
             onChange={handleEditTaskChange}

@@ -10,12 +10,12 @@ import {
   SortingState,
   useReactTable,
 } from "@tanstack/react-table";
-import { useState, useTransition, useRef } from "react";
+import { useState, useTransition, useRef, useEffect } from "react";
 import { format, parse } from "date-fns";
 import { es } from "date-fns/locale";
 import { ArrowUp, ArrowDown, Download, Upload } from "lucide-react";
 import * as XLSX from "xlsx";
-import { updateTask, deleteTaskXid } from "@/src/actions/taskActions";
+import { updateTask, deleteTaskXid, getCategories } from "@/src/actions/taskActions";
 import { Trash2 } from "lucide-react";
 
 import { FaTrash } from "react-icons/fa";
@@ -32,6 +32,16 @@ export default function TasksTable({
   const [sorting, setSorting] = useState<SortingState>([]);
   const [isPending, startTransition] = useTransition();
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [categories, setCategories] = useState<
+    { id: string; name: string; color: string }[]
+  >([]);
+
+  useEffect(() => {
+    getCategories()
+      .then(setCategories)
+      .catch(() => {});
+  }, []);
 
   const { deleteAllCompleted } = useTasks();
 
@@ -87,16 +97,20 @@ export default function TasksTable({
   // Exportar a Excel
   const handleExportExcel = () => {
     const rows = table.getRowModel().rows;
-    const exportData = rows.map((row) => ({
-      Tarea: row.original.title,
-      Descripción: row.original.description || "",
-      Completada: row.original.completed ? "Sí" : "No",
-      Prioridad: row.original.priority || "MEDIUM",
-      "Tiempo estimado": formatTime(row.original.timerMinutes),
-      "Fecha de ejecución": row.original.ExecutionDate
-        ? format(new Date(row.original.ExecutionDate), "dd/MM/yyyy")
-        : "",
-    }));
+    const exportData = rows.map((row) => {
+      const cat = categories.find((c) => c.id === row.original.categoryId);
+      return {
+        Tarea: row.original.title,
+        Descripción: row.original.description || "",
+        Completada: row.original.completed ? "Sí" : "No",
+        Prioridad: row.original.priority || "MEDIUM",
+        Categoría: cat?.name ?? "",
+        "Tiempo estimado": formatTime(row.original.timerMinutes),
+        "Fecha de ejecución": row.original.ExecutionDate
+          ? format(new Date(row.original.ExecutionDate), "dd/MM/yyyy")
+          : "",
+      };
+    });
 
     const ws = XLSX.utils.json_to_sheet(exportData);
     ws["!cols"] = [
@@ -104,6 +118,7 @@ export default function TasksTable({
       { wch: 40 },
       { wch: 12 },
       { wch: 12 },
+      { wch: 15 },
       { wch: 15 },
       { wch: 18 },
     ];
@@ -286,6 +301,31 @@ export default function TasksTable({
           (order[rowA.original.priority || "MEDIUM"] ?? 2) -
           (order[rowB.original.priority || "MEDIUM"] ?? 2)
         );
+      },
+    },
+    {
+      accessorKey: "categoryId",
+      header: "Categoría",
+      cell: ({ row }) => {
+        const cat = categories.find((c) => c.id === row.original.categoryId);
+        return cat ? (
+          <div
+            className="badge badge-sm"
+            style={{ backgroundColor: cat.color, color: "#fff" }}
+          >
+            {cat.name}
+          </div>
+        ) : (
+          <span className="text-base-content/40">—</span>
+        );
+      },
+      enableSorting: true,
+      sortingFn: (rowA, rowB) => {
+        const a = categories.find((c) => c.id === rowA.original.categoryId)
+          ?.name ?? "";
+        const b = categories.find((c) => c.id === rowB.original.categoryId)
+          ?.name ?? "";
+        return a.localeCompare(b);
       },
     },
     {
@@ -491,7 +531,7 @@ export default function TasksTable({
             {table.getRowModel().rows.length === 0 ? (
               <tr>
                 <td
-                  colSpan={6}
+                  colSpan={8}
                   className="text-center py-8 text-base-content/60"
                 >
                   No hay tareas aún. ¡Crea una nueva!
@@ -557,13 +597,36 @@ export default function TasksTable({
 
                   <div className="grid grid-cols-2 gap-3 text-sm">
                     <div>
+                      <span className="text-base-content/50">Categoría:</span>
+                      <span className="ml-2">
+                        {(() => {
+                          const cat = categories.find(
+                            (c) => c.id === task.categoryId
+                          );
+                          return cat ? (
+                            <span
+                              className="badge badge-sm"
+                              style={{
+                                backgroundColor: cat.color,
+                                color: "#fff",
+                              }}
+                            >
+                              {cat.name}
+                            </span>
+                          ) : (
+                            "—"
+                          );
+                        })()}
+                      </span>
+                    </div>
+                    <div>
                       <span className="text-base-content/50">Tiempo:</span>
                       <span className="ml-2 font-mono font-medium">
                         {formatTime(task.timerMinutes)}
                       </span>
                     </div>
                     <div>
-                      <span className="text-base-content/50">ón:</span>
+                      <span className="text-base-content/50">Ejecución:</span>
                       <span className="ml-2">
                         {task.ExecutionDate
                           ? format(

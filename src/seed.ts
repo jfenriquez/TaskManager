@@ -46,6 +46,17 @@ async function main() {
     );
   }
 
+  const categories = await Promise.all([
+    prisma.category.create({ data: { name: "Sueño", color: "#6366f1", userId: seedUserId } }),
+    prisma.category.create({ data: { name: "Trabajo", color: "#ef4444", userId: seedUserId } }),
+    prisma.category.create({ data: { name: "estudio", color: "#10b981", userId: seedUserId } }),
+    prisma.category.create({ data: { name: "Ocio y entretenimiento", color: "#f59e0b", userId: seedUserId } }),
+    prisma.category.create({ data: { name: "Cuidado personal", color: "#ec4899", userId: seedUserId } }),
+    prisma.category.create({ data: { name: "Comidas y bebidas", color: "#f97316", userId: seedUserId } }),
+    prisma.category.create({ data: { name: "Tareas del hogar", color: "#14b8a6", userId: seedUserId } }),
+    prisma.category.create({ data: { name: "Desplazamientos", color: "#8b5cf6", userId: seedUserId } }),
+  ]);
+
   await prisma.tasks.createMany({
     data: [
       {
@@ -53,29 +64,33 @@ async function main() {
         description: "Ir al supermercado y comprar frutas, verduras y leche",
         completed: false,
         userId: seedUserId,
+        categoryId: categories[5].id,
       },
       {
         title: "Estudiar Next.js 15",
         description: "Repasar conceptos nuevos de App Router y Server Actions",
         completed: false,
         userId: seedUserId,
+        categoryId: categories[2].id,
       },
       {
         title: "Ejercicio diario",
         description: "Salir a caminar 30 minutos",
         completed: true,
         userId: seedUserId,
+        categoryId: categories[4].id,
       },
       {
         title: "Leer documentación de Prisma",
         description: "Revisar seeding y relaciones entre modelos",
         completed: false,
         userId: seedUserId,
+        categoryId: categories[2].id,
       },
     ],
   });
 
-  console.log("✅ Se han insertado tareas de ejemplo correctamente.");
+  console.log("✅ Se han insertado categorías y tareas de ejemplo correctamente.");
 }
 
 main()

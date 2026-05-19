@@ -7,6 +7,7 @@ import { Task, TimerState } from "../../types/task.types";
 interface TaskListProps {
   tasks: Task[];
   counts: Record<string, TimerState>;
+  categories?: { id: string; name: string; color: string }[];
   formatRemaining: (ms: number) => string;
   onToggleComplete: (id: string) => void;
   onEdit: (task: Task) => void;
@@ -19,6 +20,7 @@ interface TaskListProps {
 export default function TaskList({
   tasks,
   counts,
+  categories,
   formatRemaining,
   onToggleComplete,
   onEdit,
@@ -46,6 +48,7 @@ export default function TaskList({
             key={task.id}
             task={task}
             timer={timer}
+            categories={categories}
             formatRemaining={formatRemaining}
             onToggleComplete={onToggleComplete}
             onEdit={onEdit}

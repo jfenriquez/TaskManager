@@ -8,6 +8,7 @@ import { Task, TimerState } from "../../types/task.types";
 interface TaskItemProps {
   task: Task;
   timer: TimerState;
+  categories?: { id: string; name: string; color: string }[];
   formatRemaining: (ms: number) => string;
   onToggleComplete: (id: string) => void;
   onEdit: (task: Task) => void;
@@ -20,6 +21,7 @@ interface TaskItemProps {
 export default function TaskItem({
   task,
   timer,
+  categories,
   formatRemaining,
   onToggleComplete,
   onEdit,
@@ -69,6 +71,20 @@ export default function TaskItem({
             ) : task.priority == "LOW" ? (
               <div className="badge badge-success badge-sm shadow-md">Baja</div>
             ) : null}
+            {(() => {
+              const cat = (categories ?? []).find(
+                (c) => c.id === task.categoryId
+              );
+              if (!cat) return null;
+              return (
+                <div
+                  className="badge badge-sm ml-1"
+                  style={{ backgroundColor: cat.color, color: "#fff" }}
+                >
+                  {cat.name}
+                </div>
+              );
+            })()}
             {task.description && (
               <p
                 className={`text-sm mt-2 leading-snug break-words ${

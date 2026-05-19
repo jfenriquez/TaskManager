@@ -4,10 +4,17 @@ import React from "react";
 import { FaPlus, FaCheck } from "react-icons/fa";
 import { Task, NewTaskForm } from "../../types/task.types";
 
+interface CategoryOption {
+  id: string;
+  name: string;
+  color: string;
+}
+
 interface TaskModalProps {
   isOpen: boolean;
   mode: "add" | "edit";
   task: NewTaskForm | Task;
+  categories?: CategoryOption[];
   isPending?: boolean;
   onClose: () => void;
   onSave: () => void;
@@ -18,6 +25,7 @@ export default function TaskModal({
   isOpen,
   mode,
   task,
+  categories,
   isPending = false,
   onClose,
   onSave,
@@ -83,7 +91,7 @@ export default function TaskModal({
                 )
               }
             />
-            {/* PRIOPRIDAD */}
+            {/* PRIORIDAD */}
             <select
               className="select select-bordered w-full bg-base-200 text-base-content mt-4"
               value={task.priority ?? ""}
@@ -92,6 +100,24 @@ export default function TaskModal({
               <option value="LOW">Prioridad Baja🌋</option>
               <option value="MEDIUM">Prioridad Media🌋🌋</option>
               <option value="HIGH">Prioridad alta🔥🌋🌋🌋</option>
+            </select>
+            {/* CATEGORÍA */}
+            <label className="label mt-2">
+              <span className="label-text font-semibold text-base-content">
+                Categoría {!isEditMode && "(opcional)"}
+              </span>
+            </label>
+            <select
+              className="select select-bordered w-full bg-base-200 text-base-content"
+              value={"categoryId" in task ? (task.categoryId ?? "") : ""}
+              onChange={(e) => onChange("categoryId", e.target.value || null)}
+            >
+              <option value="">Sin categoría</option>
+              {(categories ?? []).map((cat) => (
+                <option key={cat.id} value={cat.id}>
+                  {cat.name}
+                </option>
+              ))}
             </select>
           </div>
         </div>

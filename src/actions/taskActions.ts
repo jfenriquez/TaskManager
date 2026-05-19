@@ -18,6 +18,7 @@ export interface Itask {
     timerMinutes?: number | null;
     priority?: "LOW" | "MEDIUM" | "HIGH";
     ExecutionDate?: Date | null;
+    categoryId?: string | null;
   };
 }
 
@@ -154,6 +155,7 @@ export async function importTasks(tasks: Partial<Tasks>[]) {
             priority: task.priority || "MEDIUM",
             timerMinutes: task.timerMinutes || null,
             ExecutionDate: task.ExecutionDate || null,
+            categoryId: task.categoryId || null,
             userId: userId, // Ajusta según tu modelo
           },
         })
@@ -243,6 +245,7 @@ interface TaskInput {
   completed?: boolean;
   timerMinutes: number | null;
   priority: "LOW" | "MEDIUM" | "HIGH";
+  categoryId?: string | null;
 }
 
 export async function createTask(task: TaskInput) {
@@ -265,6 +268,7 @@ export async function createTask(task: TaskInput) {
 
         timerMinutes: task.timerMinutes ?? null,
         priority: task.priority,
+        categoryId: task.categoryId ?? null,
       },
     });
 
@@ -378,6 +382,78 @@ export const deleteTasksCompleted = async () => {
     return error;
   }
 };
+
+/* -------------------- Category server actions -------------------- */
+
+const DEFAULT_CATEGORIES = [
+  { name: "Trabajo", color: "#ef4444" },
+  { name: "Tareas del hogar", color: "#14b8a6" },
+  { name: "Ocio y entretenimiento", color: "#f59e0b" },
+  { name: "Comidas y bebidas", color: "#f97316" },
+  { name: "Sueño", color: "#6366f1" },
+  { name: "Desplazamientos", color: "#8b5cf6" },
+  { name: "estudio", color: "#10b981" },
+  { name: "Cuidado personal", color: "#ec4899" },
+];
+
+export async function ensureDefaultCategories(userId: string) {
+  const count = await prisma.category.count({ where: { userId } });
+  if (count > 0) return;
+
+  await prisma.category.createMany({
+    data: DEFAULT_CATEGORIES.map((cat) => ({ ...cat, userId })),
+  });
+}
+
+export async function getCategories() {
+  const userId = await getUserIdFromSession();
+  if (!userId) throw new Error("No autenticado");
+
+  const uid = userId.toString();
+  await ensureDefaultCategories(uid);
+
+  return prisma.category.findMany({
+    where: { userId: uid },
+    orderBy: { name: "asc" },
+  });
+}
+
+export async function createCategory(name: string, color: string = "#3b82f6") {
+  const userId = await getUserIdFromSession();
+  if (!userId) throw new Error("No autenticado");
+
+  return prisma.category.create({
+    data: {
+      name,
+      color,
+      userId: userId.toString(),
+    },
+  });
+}
+
+export async function updateCategory(id: string, data: { name?: string; color?: string }) {
+  const userId = await getUserIdFromSession();
+  if (!userId) throw new Error("No autenticado");
+
+  return prisma.category.update({
+    where: { id, userId: userId.toString() },
+    data,
+  });
+}
+
+export async function deleteCategory(id: string) {
+  const userId = await getUserIdFromSession();
+  if (!userId) throw new Error("No autenticado");
+
+  await prisma.tasks.updateMany({
+    where: { categoryId: id, userId: userId.toString() },
+    data: { categoryId: null },
+  });
+
+  return prisma.category.delete({
+    where: { id, userId: userId.toString() },
+  });
+}
 
 /* -------------------- Timer server actions -------------------- */
 
