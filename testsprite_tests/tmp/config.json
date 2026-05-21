@@ -1,0 +1,17 @@
+{
+  "status": "commited",
+  "type": "frontend",
+  "scope": "codebase",
+  "localEndpoint": "http://127.0.0.1:3000",
+  "executionArgs": {
+    "projectName": "TaskManager",
+    "projectPath": "C:\\Users\\WIN11\\.ssh\\ProyectosPersonales\\TaskManager",
+    "testIds": [],
+    "additionalInstruction": "Probar toda la aplicación frontend: landing page, login con credenciales user1@example.com / password123, registro, dashboard de tareas (CRUD, timer, filtros), categorías, tabla de tareas, perfil, selector de temas, y panel admin.",
+    "serverMode": "development",
+    "envs": {
+      "API_KEY": "sk-user-nWh7oIMTWSZVFs2FMFEAkVthDK0UcQAElrbeNLtEAvonzf56JlrKGHTEEHm1yaN-oyCaxL_8syLCQizJ8XK6YQs5EKLZM_Ee7LIYiit_AIzpj2gMbHzg8p9h-YywLqtb_OE"
+    }
+  },
+  "serverPort": 65372
+}

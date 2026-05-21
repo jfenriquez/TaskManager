@@ -1,0 +1,1461 @@
+[
+  {
+    "id": "TC001",
+    "title": "Create a new task from the dashboard",
+    "description": "This verifies that an authenticated user can create a task with details and see it appear in the task list.",
+    "category": "Task Management",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Create a new task with a title, description, timer minutes, priority, and category"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the new task appears in the task list"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC002",
+    "title": "Create edit complete and clear tasks from the dashboard",
+    "description": "This verifies that an authenticated user can manage tasks end to end on the dashboard and that the filtered list updates after completion is cleared.",
+    "category": "Task Management",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /"
+      },
+      {
+        "type": "action",
+        "description": "Create a new task"
+      },
+      {
+        "type": "action",
+        "description": "Edit the task"
+      },
+      {
+        "type": "action",
+        "description": "Mark the task as complete"
+      },
+      {
+        "type": "action",
+        "description": "Switch to the completed tasks view"
+      },
+      {
+        "type": "action",
+        "description": "Clear completed tasks"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the task list updates to reflect the cleared completed task"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC003",
+    "title": "Complete a task from the dashboard",
+    "description": "This verifies that an authenticated user can mark an existing task as completed and see it move to the completed state.",
+    "category": "Task Management",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Create a new task with a title, description, timer minutes, priority, and category"
+      },
+      {
+        "type": "action",
+        "description": "Mark the task as completed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the task appears in the completed state"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC004",
+    "title": "Log in with valid credentials",
+    "description": "This verifies that a returning user can sign in and reach the authenticated task experience.",
+    "category": "User Login",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the authenticated task dashboard is visible"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC005",
+    "title": "Edit an existing task on the dashboard",
+    "description": "This verifies that an authenticated user can update a task and see the updated details in the list.",
+    "category": "Task Management",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Create a new task with a title, description, timer minutes, priority, and category"
+      },
+      {
+        "type": "action",
+        "description": "Edit the task details"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the task shows the updated details in the task list"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC006",
+    "title": "Filter tasks between all active and completed views",
+    "description": "This verifies that an authenticated user can switch task filters and see each list state update correctly.",
+    "category": "Task Management",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /"
+      },
+      {
+        "type": "action",
+        "description": "Switch to the active tasks view"
+      },
+      {
+        "type": "action",
+        "description": "Switch to the completed tasks view"
+      },
+      {
+        "type": "action",
+        "description": "Switch back to the all tasks view"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the task list changes according to the selected filter"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC007",
+    "title": "Delete a task from the dashboard",
+    "description": "This verifies that an authenticated user can delete a task and see it removed from the list.",
+    "category": "Task Management",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Create a new task with a title, description, timer minutes, priority, and category"
+      },
+      {
+        "type": "action",
+        "description": "Delete the task"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the task is removed from the task list"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC008",
+    "title": "Create a task with category and priority",
+    "description": "This verifies that an authenticated user can create a task on the dashboard and assign category and priority so it appears in task management views.",
+    "category": "Task Management",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /categories"
+      },
+      {
+        "type": "action",
+        "description": "Create a new category"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /"
+      },
+      {
+        "type": "action",
+        "description": "Create a new task"
+      },
+      {
+        "type": "action",
+        "description": "Assign the created category to the task"
+      },
+      {
+        "type": "action",
+        "description": "Set the task priority"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the task appears with the assigned category and priority"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC009",
+    "title": "Manage categories and use them on tasks",
+    "description": "This verifies that an authenticated user can create a category, return to the dashboard, assign it to a task, and see the category reflected in the task experience.",
+    "category": "Category CRUD",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Open category management"
+      },
+      {
+        "type": "action",
+        "description": "Create a new category"
+      },
+      {
+        "type": "action",
+        "description": "Return to the task dashboard"
+      },
+      {
+        "type": "action",
+        "description": "Create a task using the new category and a priority"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the task list reflects the selected category"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC010",
+    "title": "Verify email with a valid token",
+    "description": "A visitor can open the verification page with a token and see that their email is verified successfully.",
+    "category": "Email Verification",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /verify-email with a valid verification token"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a successful verification status is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a login redirection prompt is visible"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC011",
+    "title": "Start a task timer and see it count down",
+    "description": "This verifies that an authenticated user can start a task countdown timer and observe the remaining time decrease each second.",
+    "category": "Task Timer",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /"
+      },
+      {
+        "type": "action",
+        "description": "Start the timer on a task"
+      },
+      {
+        "type": "action",
+        "description": "Wait for one second"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the remaining time is decreasing on the task timer"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC012",
+    "title": "Filter tasks by status on the dashboard",
+    "description": "This verifies that an authenticated user can switch between all, active, and completed task views and see the list update accordingly.",
+    "category": "Task Management",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Create one active task and one completed task"
+      },
+      {
+        "type": "action",
+        "description": "Switch between the all, active, and completed task views"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the task list updates to match the selected status"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC013",
+    "title": "View productivity statistics and heatmap on the profile page",
+    "description": "This verifies that an authenticated user can open the profile page and review totals, streak, charts, and the 30-day heatmap.",
+    "category": "Profile Insights",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /profile"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify task statistics and activity visualizations are displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC014",
+    "title": "Review productivity summary on profile",
+    "description": "An authenticated user can open the profile page and see their task totals, streak, and member information.",
+    "category": "Profile & Statistics",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /profile"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify task counts are displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify streak and member information are displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC015",
+    "title": "Inspect profile productivity insights",
+    "description": "This verifies that an authenticated user can open the profile page and view task totals, streak information, charts, and the activity heatmap.",
+    "category": "Profile Insights",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Open the profile page"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify task summary insights are displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify chart and heatmap activity views are displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC016",
+    "title": "Clear completed tasks from the dashboard",
+    "description": "This verifies that an authenticated user can remove completed tasks and see the completed items disappear from the list.",
+    "category": "Task Management",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Create a completed task"
+      },
+      {
+        "type": "action",
+        "description": "Clear the completed tasks"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify completed tasks no longer appear in the task list"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC017",
+    "title": "Create a category and see it in the list",
+    "description": "This verifies that an authenticated user can add a new category and see it appear in category management.",
+    "category": "Category Management",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /categories"
+      },
+      {
+        "type": "action",
+        "description": "Fill the category name field with a unique category name"
+      },
+      {
+        "type": "action",
+        "description": "Select a category color"
+      },
+      {
+        "type": "action",
+        "description": "Save the category"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the new category appears in the category list"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC018",
+    "title": "Export tasks and import updated spreadsheet rows",
+    "description": "This verifies that an authenticated power user can export tasks to Excel and then import an updated spreadsheet so the table shows the imported tasks.",
+    "category": "Excel Task Table",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /TasksTable"
+      },
+      {
+        "type": "action",
+        "description": "Export the task table to Excel"
+      },
+      {
+        "type": "action",
+        "description": "Import an updated .xlsx file into the task table"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify imported task rows appear in the table"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC019",
+    "title": "Review task table sorting and inline editing",
+    "description": "This verifies that an authenticated power user can open the task table, sort columns, edit values inline, and see the table persist the updated data.",
+    "category": "TasksTable",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Open the task table"
+      },
+      {
+        "type": "action",
+        "description": "Sort the table by a column"
+      },
+      {
+        "type": "action",
+        "description": "Edit the timer minutes inline"
+      },
+      {
+        "type": "action",
+        "description": "Edit the execution date inline"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the table shows the updated values after editing"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC020",
+    "title": "Review profile analytics charts",
+    "description": "An authenticated user can view the category distribution, top tasks, priority chart, and activity heatmap on the profile page.",
+    "category": "Profile & Statistics",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /profile"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify category distribution and top task insights are displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify priority and 30-day activity visuals are displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC021",
+    "title": "Pause and resume a running task timer",
+    "description": "This verifies that an authenticated user can pause a running timer and resume it again from the same task.",
+    "category": "Task Timer",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /"
+      },
+      {
+        "type": "action",
+        "description": "Start the timer on a task"
+      },
+      {
+        "type": "action",
+        "description": "Pause the running timer"
+      },
+      {
+        "type": "action",
+        "description": "Start the timer on the same task again"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the timer resumes counting down"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC022",
+    "title": "Use a task countdown timer on the dashboard",
+    "description": "This verifies that an authenticated user can start a task timer and see the countdown state update for that task.",
+    "category": "Task Management",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Create a new task with a timer duration"
+      },
+      {
+        "type": "action",
+        "description": "Start the task countdown timer"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the task shows an active countdown state"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC023",
+    "title": "Edit task details inline in the table",
+    "description": "This verifies that an authenticated power user can update timer minutes and execution date inline and see the table reflect those edits.",
+    "category": "Excel Task Table",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /TasksTable"
+      },
+      {
+        "type": "action",
+        "description": "Edit the timer minutes for a task inline"
+      },
+      {
+        "type": "action",
+        "description": "Edit the execution date for the same task inline"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the table shows the updated inline task fields"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC024",
+    "title": "Stop and reset a task timer",
+    "description": "This verifies that an authenticated user can stop a running timer and return it to its initial state.",
+    "category": "Task Timer",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /"
+      },
+      {
+        "type": "action",
+        "description": "Start the timer on a task"
+      },
+      {
+        "type": "action",
+        "description": "Stop and reset the timer"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the task timer returns to its starting state"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC025",
+    "title": "Register a new account with valid details",
+    "description": "This verifies that a visitor can submit the registration form and see a successful completion state.",
+    "category": "User Registration",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /register"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the name field with a new user name"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with a valid registration email"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with a valid password"
+      },
+      {
+        "type": "action",
+        "description": "Submit the registration form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a success confirmation is visible"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC026",
+    "title": "Update a category and see the changes saved",
+    "description": "This verifies that an authenticated user can rename and recolor an existing category and see the updated category in the list.",
+    "category": "Category Management",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /categories"
+      },
+      {
+        "type": "action",
+        "description": "Open category editing for an existing category"
+      },
+      {
+        "type": "action",
+        "description": "Change the category name"
+      },
+      {
+        "type": "action",
+        "description": "Change the category color"
+      },
+      {
+        "type": "action",
+        "description": "Save the category changes"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the category list shows the updated category"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC027",
+    "title": "Export tasks to Excel from the task table",
+    "description": "This verifies that an authenticated power user can export tasks from the table and receive an export confirmation in the UI.",
+    "category": "TasksTable",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Open the task table"
+      },
+      {
+        "type": "action",
+        "description": "Export the tasks to Excel"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify an export confirmation is visible"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC028",
+    "title": "Review task distribution and top tasks on the profile page",
+    "description": "This verifies that an authenticated user can inspect category distribution and the most time-consuming tasks in profile insights.",
+    "category": "Profile Insights",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /profile"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify category distribution and top time-consuming task insights are displayed"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC029",
+    "title": "Sort task table columns and keep the new order",
+    "description": "This verifies that an authenticated power user can sort a table column and see the rows reorder accordingly.",
+    "category": "Excel Task Table",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /TasksTable"
+      },
+      {
+        "type": "action",
+        "description": "Sort a task table column"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the task rows are reordered by the selected column"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC030",
+    "title": "Reject invalid login credentials",
+    "description": "This verifies that a visitor entering wrong credentials sees a login error and stays on the sign-in page.",
+    "category": "User Login",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with an invalid login email"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with an invalid password"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a login error message is visible"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC031",
+    "title": "Control ambient audio playback",
+    "description": "An authenticated user can start, pause, and resume ambient audio playback from the sidebar.",
+    "category": "Ambient Audio Player",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /"
+      },
+      {
+        "type": "action",
+        "description": "Start ambient audio playback"
+      },
+      {
+        "type": "action",
+        "description": "Pause the audio"
+      },
+      {
+        "type": "action",
+        "description": "Resume the audio"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify audio playback controls update the track state"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC032",
+    "title": "Delete a category after confirming",
+    "description": "This verifies that an authenticated user can delete a category and see it removed from the list after confirming the action.",
+    "category": "Category Management",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /categories"
+      },
+      {
+        "type": "action",
+        "description": "Open the delete action for an existing category"
+      },
+      {
+        "type": "action",
+        "description": "Confirm the deletion"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the deleted category no longer appears in the category list"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC033",
+    "title": "Switch the app theme from the landing page",
+    "description": "A visitor can open the theme selector on the landing page, choose a theme, and see the app update immediately.",
+    "category": "Theme Switching",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /"
+      },
+      {
+        "type": "action",
+        "description": "Open the theme selector"
+      },
+      {
+        "type": "action",
+        "description": "Choose a different theme"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the app theme changes immediately"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC034",
+    "title": "View the admin page as an authenticated admin",
+    "description": "An authenticated admin can open the admin page and see user information in the admin view.",
+    "category": "Admin User View",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /admin"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify user information is visible on the admin page"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC035",
+    "title": "Open the admin view as an admin user",
+    "description": "This verifies that an authenticated admin user can open the admin page and see the available admin information view.",
+    "category": "Admin Info View",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /admin"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the admin information view is displayed"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC036",
+    "title": "Advance ambient tracks and adjust volume",
+    "description": "An authenticated user can move between ambient tracks and change the volume from the sidebar.",
+    "category": "Ambient Audio Player",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /"
+      },
+      {
+        "type": "action",
+        "description": "Move to the next ambient track"
+      },
+      {
+        "type": "action",
+        "description": "Move to the previous ambient track"
+      },
+      {
+        "type": "action",
+        "description": "Adjust the audio volume level"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the current track and volume state are updated"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC037",
+    "title": "Handle an invalid email verification token",
+    "description": "A visitor can open the verification page with an invalid token and see that verification did not succeed.",
+    "category": "Email Verification",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /verify-email with an invalid verification token"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a verification error is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the login redirection prompt is not visible"
+      }
+    ],
+    "priority": "Low"
+  },
+  {
+    "id": "TC038",
+    "title": "Open the password reset entry point from login",
+    "description": "This verifies that a visitor can access the password reset entry point from the login page.",
+    "category": "User Login",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Click the forgot password link"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the password reset entry point is available"
+      }
+    ],
+    "priority": "Low"
+  },
+  {
+    "id": "TC039",
+    "title": "Deny access to the admin page for a non-admin user",
+    "description": "A signed-in non-admin user who opens the admin page sees that they are not authorized to view it.",
+    "category": "Admin User View",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /admin"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify an unauthorized access message is visible"
+      }
+    ],
+    "priority": "Low"
+  }
+]

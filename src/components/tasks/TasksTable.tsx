@@ -170,9 +170,16 @@ export default function TasksTable({
       const worksheet = workbook.Sheets[sheetName];
       const jsonData = XLSX.utils.sheet_to_json(worksheet);
 
-      // Validar y transformar datos
+      const categoryByName = new Map(
+        categories.map((c) => [c.name.toLowerCase(), c.id])
+      );
+
       const importedTasks: Partial<Tasks>[] = jsonData.map((row: unknown) => {
         const rowData = row as Record<string, unknown>;
+        const catName = (rowData["Categoría"] as string)?.trim();
+        const catId = catName
+          ? categoryByName.get(catName.toLowerCase()) ?? null
+          : null;
         return {
           title: (rowData["Tarea"] as string) || "",
           description: (rowData["Descripción"] as string | null) || null,
@@ -183,6 +190,7 @@ export default function TasksTable({
             "MEDIUM") as "HIGH" | "MEDIUM" | "LOW",
           timerMinutes: parseTime(rowData["Tiempo estimado"] as string),
           ExecutionDate: parseDate(rowData["Fecha de ejecución"] as string),
+          categoryId: catId,
         };
       });
 

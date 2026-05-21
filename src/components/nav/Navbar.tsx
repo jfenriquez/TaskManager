@@ -10,8 +10,13 @@ export default function Navbar() {
   const { data: session, isPending, error } = authClient.useSession();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [logoutError, setLogoutError] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
   const navRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (navRef.current) {
@@ -79,7 +84,7 @@ export default function Navbar() {
 
       {/* Navigation Links */}
       <div className="flex-none gap-2">
-        {isPending ? (
+        {!mounted || isPending ? (
           <div className="flex gap-2 items-center">
             <div className="skeleton h-10 w-20"></div>
             <div className="skeleton h-10 w-10 rounded-full"></div>
@@ -232,7 +237,7 @@ export default function Navbar() {
             </div>
           </>
         ) : (
-          <div className="flex gap-2">
+          <div className="flex gap-2 items-center">
             <Link
               href="/login"
               className="btn btn-ghost btn-sm sm:btn-md text-base-content/70"

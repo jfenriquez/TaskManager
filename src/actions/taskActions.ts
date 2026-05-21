@@ -551,3 +551,113 @@ export async function stopTaskTimer(taskId: string) {
   // revalidatePath("/tasks");
   return updated;
 }
+
+/* -------------------- Profile stats -------------------- */
+
+export async function getProfileStats(startDate?: string, endDate?: string) {
+  const userId = await getUserIdFromSession();
+  if (!userId) throw new Error("No autenticado");
+  const uid = userId.toString();
+
+  const [tasks, categories, user] = await Promise.all([
+    prisma.tasks.findMany({ where: { userId: uid } }),
+    prisma.category.findMany({ where: { userId: uid } }),
+    prisma.user.findUnique({
+      where: { id: uid },
+      select: { streak: true, createdAt: true, timezone: true },
+    }),
+  ]);
+
+  const totalTasks = tasks.length;
+  const completedTasks = tasks.filter((t) => t.completed).length;
+  const activeTasks = totalTasks - completedTasks;
+  const totalTimerMinutes = tasks.reduce((s, t) => s + (t.timerMinutes ?? 0), 0);
+
+  const allCompleted = tasks.filter((t) => t.completed);
+
+  // Apply date filter for category / top-tasks calculations
+  const completed = startDate || endDate
+    ? allCompleted.filter((t) => {
+        const date = t.updatedAt.toISOString().slice(0, 10);
+        if (startDate && date < startDate) return false;
+        if (endDate && date > endDate) return false;
+        return true;
+      })
+    : allCompleted;
+
+  const categoryMap = new Map(categories.map((c) => [c.id, c]));
+  const categoryDistribution = categories.map((cat) => {
+    const catTasks = completed.filter((t) => t.categoryId === cat.id);
+    return {
+      name: cat.name,
+      color: cat.color,
+      minutes: catTasks.reduce((s, t) => s + (t.timerMinutes ?? 0), 0),
+      taskCount: catTasks.length,
+    };
+  });
+  const uncategorizedMinutes = completed
+    .filter((t) => !t.categoryId)
+    .reduce((s, t) => s + (t.timerMinutes ?? 0), 0);
+  const uncategorizedCount = completed.filter((t) => !t.categoryId).length;
+  if (uncategorizedCount > 0) {
+    categoryDistribution.push({
+      name: "Sin categoría",
+      color: "#a8a29e",
+      minutes: uncategorizedMinutes,
+      taskCount: uncategorizedCount,
+    });
+  }
+
+  const topTasksByTime = completed
+    .filter((t) => t.timerMinutes != null && t.timerMinutes > 0)
+    .sort((a, b) => (b.timerMinutes ?? 0) - (a.timerMinutes ?? 0))
+    .slice(0, 5)
+    .map((t) => ({
+      title: t.title,
+      minutes: t.timerMinutes ?? 0,
+      categoryName: t.categoryId ? categoryMap.get(t.categoryId)?.name : null,
+    }));
+
+  const priorityCounts = { HIGH: 0, MEDIUM: 0, LOW: 0 };
+  tasks.forEach((t) => {
+    if (t.priority === "HIGH") priorityCounts.HIGH++;
+    else if (t.priority === "MEDIUM") priorityCounts.MEDIUM++;
+    else if (t.priority === "LOW") priorityCounts.LOW++;
+  });
+
+  const now = new Date();
+  const days: { date: string; completed: number; created: number }[] = [];
+  for (let i = 29; i >= 0; i--) {
+    const d = new Date(now);
+    d.setDate(d.getDate() - i);
+    const dateStr = d.toISOString().slice(0, 10);
+    const completedDay = tasks.filter((t) => {
+      if (!t.completed) return false;
+      const updated = t.updatedAt.toISOString().slice(0, 10);
+      return updated === dateStr;
+    });
+    const createdDay = tasks.filter((t) => {
+      const created = t.createdAt.toISOString().slice(0, 10);
+      return created === dateStr;
+    });
+    days.push({
+      date: dateStr,
+      completed: completedDay.length,
+      created: createdDay.length,
+    });
+  }
+
+  return {
+    totalTasks,
+    completedTasks,
+    activeTasks,
+    totalTimerMinutes,
+    streak: user?.streak ?? 0,
+    memberSince: user?.createdAt ?? new Date(),
+    timezone: user?.timezone ?? "UTC",
+    categoryDistribution,
+    topTasksByTime,
+    priorityCounts,
+    recentActivity: days,
+  };
+}
