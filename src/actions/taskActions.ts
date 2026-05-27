@@ -8,7 +8,8 @@ import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { Tasks } from "@prisma/client";
 //import { Tasks } from "@prisma/client";
-import { getStartOfDay, getEndOfDay } from "@/src/utils/dateHelpers";
+//import { getStartOfDay, getEndOfDay } from "@/src/utils/dateHelpers";
+import { updateStreakOnTaskToggle } from "@/src/actions/streakActions";
 export interface Itask {
   task: {
     id: string;
@@ -127,7 +128,7 @@ export const getTasksXDay = async () => {
       tasksToday.map((t) => ({
         title: t.title,
         date: t.ExecutionDate?.toISOString(),
-      }))
+      })),
     );
 
     return tasksToday;
@@ -137,7 +138,46 @@ export const getTasksXDay = async () => {
   }
 };
 
-/////importTask
+/////get tasks by specific date
+export const getTasksByDate = async (dateStr: string) => {
+  try {
+    const userId = await getUserIdFromSession();
+    if (!userId) {
+      throw new Error("No autenticado");
+    }
+
+    const allTasks = await prisma.tasks.findMany({
+      where: { userId: userId.toString() },
+      orderBy: [
+        { ExecutionDate: "asc" },
+        { priority: "desc" },
+        { createdAt: "asc" },
+      ],
+    });
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId.toString() },
+      select: { timezone: true },
+    });
+
+    const userTimezone = user?.timezone || "UTC";
+
+    const tasksForDate = allTasks.filter((task) => {
+      if (!task.ExecutionDate) return false;
+      const taskDate = task.ExecutionDate.toLocaleDateString("en-CA", {
+        timeZone: userTimezone,
+      });
+      return taskDate === dateStr;
+    });
+
+    return tasksForDate;
+  } catch (error) {
+    console.error("❌ Error en getTasksByDate:", error);
+    throw error;
+  }
+};
+
+////importTask
 export async function importTasks(tasks: Partial<Tasks>[]) {
   const userId = await getUserIdFromSession();
   if (!userId) {
@@ -158,8 +198,8 @@ export async function importTasks(tasks: Partial<Tasks>[]) {
             categoryId: task.categoryId || null,
             userId: userId, // Ajusta según tu modelo
           },
-        })
-      )
+        }),
+      ),
     );
     revalidatePath("/TasksTable"); // ajusta la ruta según tu app
     return { success: true, count: createdTasks.length };
@@ -223,7 +263,7 @@ export const getTotalTimerTasks = async () => {
       "📋 Tiempos:",
       tasksToday.map((t) => ({
         timer: t.timerMinutes,
-      }))
+      })),
     );
 
     const total = tasksToday.reduce((sum, task) => {
@@ -326,6 +366,9 @@ export const updateStatusTask = async (id: string, completed: boolean) => {
       data: { completed: completed },
       where: { id: id },
     });
+
+    await updateStreakOnTaskToggle();
+
     revalidatePath("/");
 
     return updateTask;
@@ -431,7 +474,10 @@ export async function createCategory(name: string, color: string = "#3b82f6") {
   });
 }
 
-export async function updateCategory(id: string, data: { name?: string; color?: string }) {
+export async function updateCategory(
+  id: string,
+  data: { name?: string; color?: string },
+) {
   const userId = await getUserIdFromSession();
   if (!userId) throw new Error("No autenticado");
 
@@ -472,13 +518,13 @@ export async function startTaskTimer(taskId: string, minutes?: number) {
   const secondsFromMinutes = minutes
     ? Math.floor(minutes * 60)
     : task.timerMinutes
-    ? Math.floor(task.timerMinutes * 60)
-    : null;
+      ? Math.floor(task.timerMinutes * 60)
+      : null;
 
   const secondsToUse = secondsFromRemaining ?? secondsFromMinutes;
   if (!secondsToUse || secondsToUse <= 0) {
     throw new Error(
-      "No timer duration provided (pass minutes or set timerMinutes on the task)."
+      "No timer duration provided (pass minutes or set timerMinutes on the task).",
     );
   }
 
@@ -516,7 +562,7 @@ export async function pauseTaskTimer(taskId: string) {
   const now = Date.now();
   const remainingSec = Math.max(
     0,
-    Math.ceil((task.timerEndsAt.getTime() - now) / 1000)
+    Math.ceil((task.timerEndsAt.getTime() - now) / 1000),
   );
 
   const updated = await prisma.tasks.update({
@@ -571,19 +617,23 @@ export async function getProfileStats(startDate?: string, endDate?: string) {
   const totalTasks = tasks.length;
   const completedTasks = tasks.filter((t) => t.completed).length;
   const activeTasks = totalTasks - completedTasks;
-  const totalTimerMinutes = tasks.reduce((s, t) => s + (t.timerMinutes ?? 0), 0);
+  const totalTimerMinutes = tasks.reduce(
+    (s, t) => s + (t.timerMinutes ?? 0),
+    0,
+  );
 
   const allCompleted = tasks.filter((t) => t.completed);
 
   // Apply date filter for category / top-tasks calculations
-  const completed = startDate || endDate
-    ? allCompleted.filter((t) => {
-        const date = t.updatedAt.toISOString().slice(0, 10);
-        if (startDate && date < startDate) return false;
-        if (endDate && date > endDate) return false;
-        return true;
-      })
-    : allCompleted;
+  const completed =
+    startDate || endDate
+      ? allCompleted.filter((t) => {
+          const date = t.updatedAt.toISOString().slice(0, 10);
+          if (startDate && date < startDate) return false;
+          if (endDate && date > endDate) return false;
+          return true;
+        })
+      : allCompleted;
 
   const categoryMap = new Map(categories.map((c) => [c.id, c]));
   const categoryDistribution = categories.map((cat) => {

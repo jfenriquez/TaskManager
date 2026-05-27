@@ -57,7 +57,7 @@ model User {
   accounts      Account[]
   sessions      Session[]
   role          Role      @default(USER)
-  streak        Int       @default(0) // racha actual de días completados de tareas
+  streak        Int       @default(0)
   timezone      String    @default("UTC")
 
   @@map("user")

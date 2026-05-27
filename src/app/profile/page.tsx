@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/src/hooks/useAuth";
 import { getProfileStats } from "@/src/actions/taskActions";
 import { useUserTimezone } from "@/src/hooks/useUserTimezone";
+import StreakDisplay from "@/src/components/streak/StreakDisplay";
 
 interface Stats {
   totalTasks: number;
@@ -264,14 +265,7 @@ export default function ProfilePage() {
 
             {/* Streak + Timezone row */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="card bg-base-100 shadow-xl border border-base-300 p-6">
-                <h2 className="font-semibold mb-1">Racha actual</h2>
-                <div className="flex items-center gap-3">
-                  <span className="text-4xl">🔥</span>
-                  <span className="text-5xl font-black">{stats.streak}</span>
-                  <span className="text-base-content/50">días</span>
-                </div>
-              </div>
+              <StreakDisplay />
               <div className="card bg-base-100 shadow-xl border border-base-300 p-6">
                 <h2 className="font-semibold mb-3">Zona horaria</h2>
                 <select

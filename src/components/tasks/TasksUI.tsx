@@ -2,7 +2,7 @@
 
 import { useAuth } from "@/src/hooks/useAuth";
 import { Tasks } from "@prisma/client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useTasks } from "@/src/hooks/useTasks";
 import { useTimer } from "@/src/hooks/useTimer";
 import { useNotifications } from "@/src/hooks/useNotifications";
@@ -18,7 +18,7 @@ import TaskList from "@/src/components/tasks/TaskList";
 import TaskModal from "@/src/components/tasks/TaskModal";
 import { Task, NewTaskForm, FilterType } from "@/src/types/task.types";
 import TaskTotalTime from "./TaskTotalTime";
-import { getCategories } from "@/src/actions/taskActions";
+import { getCategories, getTasksByDate } from "@/src/actions/taskActions";
 
 interface TasksProps {
   data?: Tasks[];
@@ -55,6 +55,7 @@ export default function TasksUI({ data = [] }: TasksProps) {
   // Hooks personalizados
   const {
     tasks,
+    setTasks,
     isPending,
     handleAddTask,
     deleteTask,
@@ -65,6 +66,74 @@ export default function TasksUI({ data = [] }: TasksProps) {
     handlePauseTimer,
     handleStopTimer: stopTimer,
   } = useTasks(data);
+
+  // Date navigation
+  const browserTz = typeof window !== "undefined"
+    ? Intl.DateTimeFormat().resolvedOptions().timeZone
+    : "UTC";
+
+  const todayDate = new Date().toLocaleDateString("en-CA", { timeZone: browserTz });
+
+  const [selectedDate, setSelectedDate] = useState(todayDate);
+  const [dateLoading, setDateLoading] = useState(false);
+
+  const formatDisplayDate = (dateStr: string) => {
+    const [y, m, d] = dateStr.split("-").map(Number);
+    const dt = new Date(y, m - 1, d);
+    return dt.toLocaleDateString("es", {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+  };
+
+  const shiftDate = (dateStr: string, delta: number) => {
+    const [y, m, d] = dateStr.split("-").map(Number);
+    const dt = new Date(Date.UTC(y, m - 1, d, 12, 0, 0));
+    dt.setUTCDate(dt.getUTCDate() + delta);
+    return dt.toISOString().slice(0, 10);
+  };
+
+  const goNextDay = () => setSelectedDate((prev) => shiftDate(prev, 1));
+  const goPrevDay = () => setSelectedDate((prev) => shiftDate(prev, -1));
+  const goToday = () => setSelectedDate(todayDate);
+
+  const isToday = selectedDate === todayDate;
+
+  const fetchTasksForDate = useCallback(async (dateStr: string) => {
+    setDateLoading(true);
+    try {
+      const fetched = await getTasksByDate(dateStr);
+      setTasks(
+        fetched.map((task) => ({
+          id: task.id,
+          title: task.title,
+          description: task.description,
+          completed: task.completed,
+          timerMinutes: task.timerMinutes ?? null,
+          timerStartedAt: task.timerStartedAt
+            ? new Date(task.timerStartedAt).toISOString()
+            : null,
+          timerEndsAt: task.timerEndsAt
+            ? new Date(task.timerEndsAt).toISOString()
+            : null,
+          timerRemainingSeconds: task.timerRemainingSeconds ?? null,
+          timerRunning: task.timerRunning ?? false,
+          priority: task.priority as "LOW" | "MEDIUM" | "HIGH" | null,
+          categoryId: task.categoryId ?? null,
+        }))
+      );
+    } catch (err) {
+      console.error("Error fetching tasks for date:", err);
+    } finally {
+      setDateLoading(false);
+    }
+  }, [setTasks]);
+
+  useEffect(() => {
+    queueMicrotask(() => fetchTasksForDate(selectedDate));
+  }, [selectedDate, fetchTasksForDate]);
 
   const handleTimerEnd = (taskId: string) => {
     setHighlightTask(taskId);
@@ -199,6 +268,49 @@ export default function TasksUI({ data = [] }: TasksProps) {
             onDeleteCompleted={deleteAllCompleted}
             onRequestNotifications={handleRequestNotifications}
           />
+        </div>
+
+        {/* Date navigator — carrusel de días */}
+        <div className="mb-4">
+          <div className="card bg-base-100 shadow-sm border border-base-300">
+            <div className="card-body p-3 sm:p-4">
+              <div className="flex items-center justify-between gap-2">
+                <button
+                  className="btn btn-ghost btn-sm btn-square"
+                  onClick={goPrevDay}
+                  aria-label="Día anterior"
+                >
+                  ◀
+                </button>
+
+                <div className="flex items-center gap-3 flex-1 justify-center min-w-0">
+                  {dateLoading ? (
+                    <span className="loading loading-spinner loading-sm" />
+                  ) : (
+                    <span className="text-sm sm:text-base font-medium capitalize truncate text-center">
+                      {formatDisplayDate(selectedDate)}
+                    </span>
+                  )}
+                  {!isToday && (
+                    <button
+                      className="btn btn-outline btn-xs whitespace-nowrap"
+                      onClick={goToday}
+                    >
+                      Hoy
+                    </button>
+                  )}
+                </div>
+
+                <button
+                  className="btn btn-ghost btn-sm btn-square"
+                  onClick={goNextDay}
+                  aria-label="Día siguiente"
+                >
+                  ▶
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Stats con layout responsive */}
