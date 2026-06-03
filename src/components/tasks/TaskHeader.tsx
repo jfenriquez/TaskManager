@@ -1,21 +1,20 @@
 // components/TaskHeader.tsx
 
 import React from "react";
-import { FaTrash, FaBell } from "react-icons/fa";
+import { FaBell } from "react-icons/fa";
 import TaskAvatar from "./TaskAvatar";
 import { TaskStats } from "../../types/task.types";
+import StreakBadge from "@/src/components/streak/StreakBadge";
 
 interface TaskHeaderProps {
   userName?: string;
   stats: TaskStats;
-  onDeleteCompleted: () => void;
   onRequestNotifications: () => void;
 }
 
 export default function TaskHeader({
   userName,
   stats,
-  onDeleteCompleted,
   onRequestNotifications,
 }: TaskHeaderProps) {
   return (
@@ -43,14 +42,8 @@ export default function TaskHeader({
         </div>
       </div>
 
-      <div>
-        <button
-          onClick={onDeleteCompleted}
-          className="btn btn-error btn-md gap-2"
-        >
-          <FaTrash size={16} />
-          Eliminar completadas
-        </button>
+      <div className="flex items-center gap-3">
+        <StreakBadge />
       </div>
     </div>
   );

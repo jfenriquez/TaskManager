@@ -5,6 +5,18 @@ import { useAuth } from "@/src/hooks/useAuth";
 import { getProfileStats } from "@/src/actions/taskActions";
 import { useUserTimezone } from "@/src/hooks/useUserTimezone";
 import StreakDisplay from "@/src/components/streak/StreakDisplay";
+import {
+  Chart as ChartJS,
+  ArcElement,
+  Tooltip,
+  Legend,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+} from "chart.js";
+import { Doughnut, Bar } from "react-chartjs-2";
+
+ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement);
 
 interface Stats {
   totalTasks: number;
@@ -27,7 +39,7 @@ function fmt(minutes: number): string {
   return h > 0 ? `${h}h ${m}m` : `${m}m`;
 }
 
-function Donut({ data }: { data: { name: string; color: string; value: number }[] }) {
+function DonutChart({ data }: { data: { name: string; color: string; value: number }[] }) {
   const total = data.reduce((s, d) => s + d.value, 0);
   if (total === 0) {
     return (
@@ -36,25 +48,41 @@ function Donut({ data }: { data: { name: string; color: string; value: number }[
       </div>
     );
   }
-  const segments = data.filter((d) => d.value > 0);
-  const conic = segments
-    .map((d, i) => {
-      const pct = ((d.value / total) * 100).toFixed(1);
-      const prevPct = segments
-        .slice(0, i)
-        .reduce((s, seg) => s + (seg.value / total) * 100, 0);
-      return `${d.color} ${prevPct}% ${prevPct + parseFloat(pct)}%`;
-    })
-    .join(", ");
-
+  const chartData = {
+    labels: data.filter((d) => d.value > 0).map((d) => d.name),
+    datasets: [
+      {
+        data: data.filter((d) => d.value > 0).map((d) => d.value),
+        backgroundColor: data.filter((d) => d.value > 0).map((d) => d.color),
+        borderWidth: 2,
+        borderColor: "transparent",
+      },
+    ],
+  };
   return (
     <div className="flex flex-col items-center gap-4">
-      <div
-        className="w-40 h-40 rounded-full"
-        style={{ background: `conic-gradient(${conic})` }}
-      />
+      <div className="w-48 h-48">
+        <Doughnut
+          data={chartData}
+          options={{
+            cutout: "65%",
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: (ctx) => {
+                    const val = ctx.parsed;
+                    const pct = ((val / total) * 100).toFixed(1);
+                    return `${ctx.label}: ${val} min (${pct}%)`;
+                  },
+                },
+              },
+            },
+          }}
+        />
+      </div>
       <div className="flex flex-wrap gap-3 justify-center">
-        {segments.map((d) => (
+        {data.filter((d) => d.value > 0).map((d) => (
           <div key={d.name} className="flex items-center gap-1.5 text-xs">
             <span
               className="w-3 h-3 rounded-full inline-block"
@@ -119,44 +147,63 @@ function ActivityHeatmap({ days }: { days: Stats["recentActivity"] }) {
   );
 }
 
-function BarChart({
-  data,
-  valueKey,
-  labelKey,
-  colorKey,
-  max,
+function BarChartComponent({
+  labels,
+  values,
+  colors,
   unit,
+  title,
 }: {
-  data: Record<string, any>[];
-  valueKey: string;
-  labelKey: string;
-  colorKey?: string;
-  max?: number;
+  labels: string[];
+  values: number[];
+  colors: string[];
   unit?: string;
+  title?: string;
 }) {
-  const maxVal = max ?? Math.max(...data.map((d) => d[valueKey]), 1);
+  if (values.length === 0 || values.every((v) => v === 0)) {
+    return (
+      <div className="flex items-center justify-center h-32 text-base-content/40">
+        Sin datos
+      </div>
+    );
+  }
+  const chartData = {
+    labels,
+    datasets: [
+      {
+        data: values,
+        backgroundColor: colors,
+        borderRadius: 6,
+      },
+    ],
+  };
   return (
-    <div className="space-y-2">
-      {data.map((d, i) => (
-        <div key={i}>
-          <div className="flex justify-between text-sm mb-1">
-            <span className="truncate text-base-content/80">{d[labelKey]}</span>
-            <span className="font-mono text-xs">
-              {d[valueKey]}{unit ?? ""}
-            </span>
-          </div>
-          <div className="w-full bg-base-200 rounded-full h-3 overflow-hidden">
-            <div
-              className="h-full rounded-full transition-all duration-500"
-              style={{
-                width: `${(d[valueKey] / maxVal) * 100}%`,
-                backgroundColor: colorKey ? d[colorKey] : "var(--p)",
-              }}
-            />
-          </div>
-        </div>
-      ))}
-    </div>
+    <Bar
+      data={chartData}
+      options={{
+        indexAxis: "y",
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => `${ctx.parsed.x}${unit ?? ""}`,
+            },
+          },
+        },
+        scales: {
+          x: {
+            grid: { display: false },
+            ticks: { font: { size: 11 } },
+          },
+          y: {
+            grid: { display: false },
+            ticks: { font: { size: 12 } },
+          },
+        },
+      }}
+    />
   );
 }
 
@@ -325,22 +372,19 @@ export default function ProfilePage() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <Donut data={donutData} />
+                <DonutChart data={donutData} />
                 <div className="space-y-3">
                   <p className="text-sm font-medium text-base-content/70">
                     Minutos por categoría
                   </p>
-                  <BarChart
-                    data={catDist.map((c) => ({
-                      label: c.name,
-                      value: c.minutes,
-                      color: c.color,
-                    }))}
-                    valueKey="value"
-                    labelKey="label"
-                    colorKey="color"
-                    unit=" min"
-                  />
+                  <div className="h-48">
+                    <BarChartComponent
+                      labels={catDist.map((c) => c.name)}
+                      values={catDist.map((c) => c.minutes)}
+                      colors={catDist.map((c) => c.color)}
+                      unit=" min"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -387,12 +431,13 @@ export default function ProfilePage() {
               <h2 className="font-semibold text-lg mb-4">
                 Tareas por prioridad
               </h2>
-              <BarChart
-                data={priorityData}
-                valueKey="value"
-                labelKey="label"
-                colorKey="color"
-              />
+              <div className="h-40">
+                <BarChartComponent
+                  labels={priorityData.map((p) => p.label)}
+                  values={priorityData.map((p) => p.value)}
+                  colors={priorityData.map((p) => p.color)}
+                />
+              </div>
             </div>
 
             {/* Activity */}

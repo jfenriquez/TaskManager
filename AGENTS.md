@@ -10,13 +10,13 @@
 ## Commands
 | Command | What it does |
 |---|---|
-| `npm run dev` | next dev server |
-| `npm run build` | `prisma migrate dev` then `next build` |
-| `npm run start` | `prisma migrate deploy` then `next start` |
-| `npm run lint` | ESLint (flat config at `eslint.config.mjs`) |
-| `npm run prisma:seed` | `ts-node src/seed.ts` |
-| `npx prisma generate` | Regenerates Prisma client after schema changes |
-| `npx tsc --noEmit` | TypeScript type-check (no dedicated script) |
+| `pnpm dev` | next dev server |
+| `pnpm build` | `prisma migrate dev` then `next build` |
+| `pnpm start` | `prisma migrate deploy` then `next start` |
+| `pnpm lint` | ESLint (flat config at `eslint.config.mjs`) |
+| `pnpm prisma:seed` | `ts-node src/seed.ts` |
+| `pnpx prisma generate` | Regenerates Prisma client after schema changes |
+| `pnpx tsc --noEmit` | TypeScript type-check (no dedicated script) |
 
 ## Architecture
 

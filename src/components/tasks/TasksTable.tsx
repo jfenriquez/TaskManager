@@ -18,8 +18,8 @@ import * as XLSX from "xlsx";
 import { updateTask, deleteTaskXid, getCategories } from "@/src/actions/taskActions";
 import { Trash2 } from "lucide-react";
 
-import { FaTrash } from "react-icons/fa";
 import { useTasks } from "@/src/hooks/useTasks";
+import StreakBadge from "@/src/components/streak/StreakBadge";
 interface TasksTableProps {
   tasks?: Tasks[];
   onImportTasks?: (tasks: Partial<Tasks>[]) => Promise<void>;
@@ -42,18 +42,6 @@ export default function TasksTable({
       .then(setCategories)
       .catch(() => {});
   }, []);
-
-  const { deleteAllCompleted } = useTasks();
-
-  const onDeleteCompleted = async () => {
-    startTransition(async () => {
-      try {
-        await deleteAllCompleted();
-      } catch (error) {
-        console.error("Error al eliminar tareas completadas:", error);
-      }
-    });
-  };
 
   const getPriorityBadge = (priority: string | null) => {
     const p = priority || "MEDIUM";
@@ -462,14 +450,8 @@ export default function TasksTable({
 
   return (
     <div className="space-y-4">
-      <div>
-        <button
-          onClick={onDeleteCompleted}
-          className="btn btn-error btn-md gap-2"
-        >
-          <FaTrash size={16} />
-          Eliminar completadas
-        </button>
+      <div className="flex items-center gap-3">
+        <StreakBadge />
       </div>
       {/* Input oculto para seleccionar archivo */}
       <input

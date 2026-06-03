@@ -19,6 +19,7 @@ import TaskModal from "@/src/components/tasks/TaskModal";
 import { Task, NewTaskForm, FilterType } from "@/src/types/task.types";
 import TaskTotalTime from "./TaskTotalTime";
 import { getCategories, getTasksByDate } from "@/src/actions/taskActions";
+import MonthlyGoal from "@/src/components/goal/MonthlyGoal";
 
 interface TasksProps {
   data?: Tasks[];
@@ -61,7 +62,6 @@ export default function TasksUI({ data = [] }: TasksProps) {
     deleteTask,
     toggleComplete,
     handleUpdateTask,
-    deleteAllCompleted,
     handleStartTimer: startTimer,
     handlePauseTimer,
     handleStopTimer: stopTimer,
@@ -265,7 +265,6 @@ export default function TasksUI({ data = [] }: TasksProps) {
           <TaskHeader
             userName={user?.name ?? undefined}
             stats={stats}
-            onDeleteCompleted={deleteAllCompleted}
             onRequestNotifications={handleRequestNotifications}
           />
         </div>
@@ -311,6 +310,11 @@ export default function TasksUI({ data = [] }: TasksProps) {
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Monthly Goal — objetivo mensual */}
+        <div className="mb-4">
+          <MonthlyGoal />
         </div>
 
         {/* Stats con layout responsive */}

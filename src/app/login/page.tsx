@@ -2,13 +2,23 @@
 
 import { authClient } from "@/src/lib/auth-client";
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { gsap } from "gsap";
+import { useAuth } from "@/src/hooks/useAuth";
 
 export default function LoginPage() {
+  const router = useRouter();
+  const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
+
+  useEffect(() => {
+    if (!isAuthLoading && isAuthenticated) {
+      router.push("/");
+    }
+  }, [isAuthenticated, isAuthLoading, router]);
 
   useEffect(() => {
     // Animación de entrada con GSAP
