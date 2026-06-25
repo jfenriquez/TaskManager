@@ -2,7 +2,7 @@
 
 import { useAuth } from "@/src/hooks/useAuth";
 import { Tasks } from "@prisma/client";
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useTasks } from "@/src/hooks/useTasks";
 import { useTimer } from "@/src/hooks/useTimer";
 import { useNotifications } from "@/src/hooks/useNotifications";
@@ -162,6 +162,33 @@ export default function TasksUI({ data = [] }: TasksProps) {
     tasks,
     onTimerEnd: handleTimerEnd,
   });
+
+  // Dynamic document title when timer is running and page is hidden
+  const baseTitleRef = useRef("");
+  useEffect(() => {
+    baseTitleRef.current = document.title;
+  }, []);
+
+  useEffect(() => {
+    const baseTitle = baseTitleRef.current;
+
+    const updateTitle = () => {
+      const runningEntry = Object.entries(counts).find(([, s]) => s.running);
+      if (runningEntry && document.visibilityState === "hidden") {
+        document.title = `${formatRemaining(runningEntry[1].remainingMs)} - ${baseTitle}`;
+      } else {
+        document.title = baseTitle;
+      }
+    };
+
+    updateTitle();
+    document.addEventListener("visibilitychange", updateTitle);
+
+    return () => {
+      document.title = baseTitle;
+      document.removeEventListener("visibilitychange", updateTitle);
+    };
+  }, [counts, formatRemaining]);
 
   const {
     ensureNotificationPermission,
