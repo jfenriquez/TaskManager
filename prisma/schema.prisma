@@ -262,7 +262,7 @@ model XpLog {
 model DailyLog {
   id              String   @id @default(cuid())
   playerId        String
-  date            String
+  date            DateTime
   tasksCompleted  Int      @default(0)
   goalsProgress   Int      @default(0)
   xpEarned        Int      @default(0)
