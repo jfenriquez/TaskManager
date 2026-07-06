@@ -1,8 +1,7 @@
 "use server";
 
 import { prisma } from "@/src/lib/prisma";
-import { auth } from "@/src/lib/auth";
-import { headers } from "next/headers";
+import { getCurrentUserId } from "@/src/lib/auth-utils";
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import {
@@ -14,11 +13,6 @@ import type { StreakData, MilestoneDay, MilestoneEntry } from "@/src/types/strea
 
 const GOAL_COOKIE = "dailyTaskGoal";
 
-async function getUserId(): Promise<string | null> {
-  const session = await auth.api.getSession({ headers: await headers() });
-  return session?.user?.id ?? null;
-}
-
 async function getGoalFromCookies(): Promise<number> {
   const store = await cookies();
   const val = store.get(GOAL_COOKIE)?.value;
@@ -26,7 +20,7 @@ async function getGoalFromCookies(): Promise<number> {
 }
 
 export async function updateStreakOnTaskToggle(goal?: number): Promise<number> {
-  const userId = await getUserId();
+  const userId = await getCurrentUserId();
   if (!userId) return 0;
 
   const userTimezone = await prisma.user.findUnique({
@@ -37,14 +31,16 @@ export async function updateStreakOnTaskToggle(goal?: number): Promise<number> {
   const dailyGoal = goal ?? (await getGoalFromCookies());
 
   const todayStr = getTodayInTimezone(tz);
+  const oneYearAgo = new Date();
+  oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
 
-  const allCompleted = await prisma.tasks.findMany({
-    where: { userId, completed: true },
+  const recentCompleted = await prisma.tasks.findMany({
+    where: { userId, completed: true, updatedAt: { gte: oneYearAgo } },
     select: { updatedAt: true },
   });
 
   const tasksByDate = new Map<string, number>();
-  for (const task of allCompleted) {
+  for (const task of recentCompleted) {
     const ds = task.updatedAt.toLocaleDateString("en-CA", { timeZone: tz });
     tasksByDate.set(ds, (tasksByDate.get(ds) ?? 0) + 1);
   }
@@ -76,7 +72,7 @@ export async function updateStreakOnTaskToggle(goal?: number): Promise<number> {
 }
 
 export async function getStreakData(): Promise<StreakData> {
-  const userId = await getUserId();
+  const userId = await getCurrentUserId();
   if (!userId) {
     return { currentStreak: 0, bestStreak: 0, dailyTaskGoal: 1, todayCount: 0, lastStreakDate: null, milestones: [] };
   }
@@ -91,8 +87,10 @@ export async function getStreakData(): Promise<StreakData> {
   const todayStr = getTodayInTimezone(tz);
   const dailyGoal = await getGoalFromCookies();
 
+  const oneYearAgo = new Date();
+  oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
   const allCompleted = await prisma.tasks.findMany({
-    where: { userId, completed: true },
+    where: { userId, completed: true, updatedAt: { gte: oneYearAgo } },
     select: { updatedAt: true },
   });
 
@@ -154,7 +152,7 @@ export async function setDailyTaskGoal(goal: number): Promise<void> {
   cookieStore.set(GOAL_COOKIE, String(clamped), {
     maxAge: 365 * 24 * 60 * 60,
     path: "/",
-    httpOnly: false,
+    httpOnly: true,
   });
   revalidatePath("/profile");
 }

@@ -2,7 +2,7 @@
 
 import React from "react";
 import { FaPlus, FaCheck } from "react-icons/fa";
-import { Task, NewTaskForm } from "../../types/task.types";
+import { Task, NewTaskForm } from "@/src/types/task.types";
 
 interface CategoryOption {
   id: string;

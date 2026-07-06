@@ -1,5 +1,5 @@
 import React from "react";
-import { TaskStats } from "../../types/task.types";
+import { TaskStats } from "@/src/types/task.types";
 
 interface TaskStatsProps {
   stats: TaskStats;

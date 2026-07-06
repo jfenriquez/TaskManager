@@ -67,14 +67,13 @@ export default function TasksTable({
   // Función para mostrar toast
   const showToast = (message: string, type: "success" | "error") => {
     const toast = document.createElement("div");
-    toast.className = `toast toast-top toast-end z-50`;
-    toast.innerHTML = `
-      <div class="alert alert-${
-        type === "success" ? "success" : "error"
-      } shadow-lg">
-        <span>${message}</span>
-      </div>
-    `;
+    toast.className = "toast toast-top toast-end z-50";
+    const alert = document.createElement("div");
+    alert.className = `alert alert-${type === "success" ? "success" : "error"} shadow-lg`;
+    const span = document.createElement("span");
+    span.textContent = message;
+    alert.appendChild(span);
+    toast.appendChild(alert);
     document.body.appendChild(toast);
 
     setTimeout(() => {

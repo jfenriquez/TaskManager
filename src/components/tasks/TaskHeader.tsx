@@ -3,7 +3,7 @@
 import React from "react";
 import { FaBell } from "react-icons/fa";
 import TaskAvatar from "./TaskAvatar";
-import { TaskStats } from "../../types/task.types";
+import { TaskStats } from "@/src/types/task.types";
 import StreakBadge from "@/src/components/streak/StreakBadge";
 
 interface TaskHeaderProps {

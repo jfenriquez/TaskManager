@@ -1,16 +1,16 @@
 "use server";
 
 import { Tasks } from "@prisma/client";
-import { getTasksXDay } from "../actions/taskActions";
+import { getTasksXDay } from "@/src/actions/taskActions";
 import TasksUI from "@/src/components/tasks/TasksUI";
 import { headers } from "next/headers";
-import { auth } from "../lib/auth";
-import Footer from "../components/home/Footer";
-import CTA from "../components/home/CTA";
-import Features from "../components/home/Features";
-import Hero from "../components/home/Hero";
-import TaskTotalTime from "../components/tasks/TaskTotalTime";
-import MarqueeTicker from "../components/MarqueeTicker";
+import { auth } from "@/src/lib/auth";
+import Footer from "@/src/components/home/Footer";
+import CTA from "@/src/components/home/CTA";
+import Features from "@/src/components/home/Features";
+import Hero from "@/src/components/home/Hero";
+import TaskTotalTime from "@/src/components/tasks/TaskTotalTime";
+import MarqueeTicker from "@/src/components/MarqueeTicker";
 
 export default async function TaskManager() {
   const session = await auth.api.getSession({

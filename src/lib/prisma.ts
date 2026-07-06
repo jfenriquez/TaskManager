@@ -8,7 +8,7 @@ const globalForPrisma = globalThis as unknown as {
 export const prisma =
   globalForPrisma.prisma ??
   new PrismaClient({
-    log: ["query", "error", "warn"],
+    log: process.env.NODE_ENV === "production" ? ["error"] : ["query", "error", "warn"],
   });
 
 // 👇 Se guarda la instancia global solo en desarrollo (importante para hot-reload)

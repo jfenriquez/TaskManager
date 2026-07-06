@@ -1,14 +1,12 @@
 "use server";
 
 import { prisma } from "@/src/lib/prisma";
-/////traer session
-import { auth } from "@/src/lib/auth";
+import { getCurrentUserId } from "@/src/lib/auth-utils";
 import type { UserWithRole } from "@/src/types/auth";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
-import { Tasks } from "@prisma/client";
-//import { Tasks } from "@prisma/client";
-//import { getStartOfDay, getEndOfDay } from "@/src/utils/dateHelpers";
+import { auth } from "@/src/lib/auth";
+import { getStartOfDay, getEndOfDay } from "@/src/utils/dateHelpers";
 import { updateStreakOnTaskToggle } from "@/src/actions/streakActions";
 export interface Itask {
   task: {
@@ -24,37 +22,14 @@ export interface Itask {
 }
 
 export async function getUserFromSession(): Promise<UserWithRole | null> {
-  // obtener sesión desde Better Auth en server
-  const session = await auth.api.getSession({
-    headers: await headers(), // importantísimo: pasar headers()
-    ///cookies: await cookies(), // importantísimo: pasar cookies()
-  });
-  // Devuelve el usuario tipado o null
+  const session = await auth.api.getSession({ headers: await headers() });
   return (session?.user as UserWithRole) ?? null;
-}
-
-export async function getUserIdFromSession(): Promise<string | null> {
-  try {
-    // obtener sesión desde Better Auth en server
-    const session = await auth.api.getSession({
-      headers: await headers(), // importantísimo: pasar headers()
-      ///cookies: await cookies(), // importantísimo: pasar cookies()
-    });
-
-    const userId =
-      session?.user?.id ?? (session as unknown as { userId?: string })?.userId;
-
-    return userId || null;
-  } catch (error) {
-    console.error("Error al obtener userId de la sesión:", error);
-    return null;
-  }
 }
 
 //////get
 export const getTasks = async () => {
   try {
-    const userId = await getUserIdFromSession();
+    const userId = await getCurrentUserId();
     if (!userId) {
       throw new Error("No autenticado: no hay userId en la sesión");
     }
@@ -77,15 +52,27 @@ export const getTasks = async () => {
 ////get tasks x day
 export const getTasksXDay = async () => {
   try {
-    const userId = await getUserIdFromSession();
+    const userId = await getCurrentUserId();
     if (!userId) {
       throw new Error("No autenticado");
     }
 
-    // Obtener TODAS las tareas del usuario
-    const allTasks = await prisma.tasks.findMany({
+    const user = await prisma.user.findUnique({
+      where: { id: userId.toString() },
+      select: { timezone: true },
+    });
+
+    const userTimezone = user?.timezone || "UTC";
+    const todayStart = getStartOfDay(userTimezone);
+    const todayEnd = getEndOfDay(userTimezone);
+
+    const tasksToday = await prisma.tasks.findMany({
       where: {
         userId: userId.toString(),
+        OR: [
+          { ExecutionDate: { gte: todayStart, lte: todayEnd } },
+          { ExecutionDate: null },
+        ],
       },
       orderBy: [
         { ExecutionDate: "asc" },
@@ -94,46 +81,9 @@ export const getTasksXDay = async () => {
       ],
     });
 
-    // Obtener timezone del usuario
-    const user = await prisma.user.findUnique({
-      where: { id: userId.toString() },
-      select: { timezone: true },
-    });
-
-    const userTimezone = user?.timezone || "UTC";
-    console.log("🌍 Zona horaria del usuario:", userTimezone);
-    // Fecha de hoy en la zona del usuario
-    const today = new Date().toLocaleDateString("en-CA", {
-      timeZone: userTimezone,
-    });
-
-    console.log("🔍 Filtrando tareas para:", today);
-
-    // Filtrar en JavaScript
-    const tasksToday = allTasks.filter((task) => {
-      // Incluir tareas sin fecha
-      if (!task.ExecutionDate) return true;
-
-      // Convertir ExecutionDate a string de fecha en la zona del usuario
-      const taskDate = task.ExecutionDate.toLocaleDateString("en-CA", {
-        timeZone: userTimezone,
-      });
-
-      return taskDate === today;
-    });
-
-    console.log("✅ Tareas encontradas:", tasksToday.length);
-    console.log(
-      "📋 Tareas:",
-      tasksToday.map((t) => ({
-        title: t.title,
-        date: t.ExecutionDate?.toISOString(),
-      })),
-    );
-
     return tasksToday;
   } catch (error) {
-    console.error("❌ Error en getTasksXDay:", error);
+    console.error("Error en getTasksXDay:", error);
     throw error;
   }
 };
@@ -141,13 +91,19 @@ export const getTasksXDay = async () => {
 /////get tasks by specific date
 export const getTasksByDate = async (dateStr: string) => {
   try {
-    const userId = await getUserIdFromSession();
+    const userId = await getCurrentUserId();
     if (!userId) {
       throw new Error("No autenticado");
     }
 
-    const allTasks = await prisma.tasks.findMany({
-      where: { userId: userId.toString() },
+    const startOfDay = new Date(`${dateStr}T00:00:00.000Z`);
+    const endOfDay = new Date(`${dateStr}T23:59:59.999Z`);
+
+    const tasksForDate = await prisma.tasks.findMany({
+      where: {
+        userId: userId.toString(),
+        ExecutionDate: { gte: startOfDay, lte: endOfDay },
+      },
       orderBy: [
         { ExecutionDate: "asc" },
         { priority: "desc" },
@@ -155,31 +111,26 @@ export const getTasksByDate = async (dateStr: string) => {
       ],
     });
 
-    const user = await prisma.user.findUnique({
-      where: { id: userId.toString() },
-      select: { timezone: true },
-    });
-
-    const userTimezone = user?.timezone || "UTC";
-
-    const tasksForDate = allTasks.filter((task) => {
-      if (!task.ExecutionDate) return false;
-      const taskDate = task.ExecutionDate.toLocaleDateString("en-CA", {
-        timeZone: userTimezone,
-      });
-      return taskDate === dateStr;
-    });
-
     return tasksForDate;
   } catch (error) {
-    console.error("❌ Error en getTasksByDate:", error);
+    console.error("Error en getTasksByDate:", error);
     throw error;
   }
 };
 
 ////importTask
-export async function importTasks(tasks: Partial<Tasks>[]) {
-  const userId = await getUserIdFromSession();
+interface ImportTaskInput {
+  title?: string;
+  description?: string | null;
+  completed?: boolean;
+  priority?: "LOW" | "MEDIUM" | "HIGH";
+  timerMinutes?: number | null;
+  ExecutionDate?: Date | string | null;
+  categoryId?: string | null;
+}
+
+export async function importTasks(tasks: ImportTaskInput[]) {
+  const userId = await getCurrentUserId();
   if (!userId) {
     throw new Error("No autenticado: no hay userId en la sesión");
   }
@@ -211,68 +162,35 @@ export async function importTasks(tasks: Partial<Tasks>[]) {
 
 export const getTotalTimerTasks = async () => {
   try {
-    const userId = await getUserIdFromSession();
+    const userId = await getCurrentUserId();
     if (!userId) {
       throw new Error("No autenticado");
     }
 
-    // Obtener TODAS las tareas del usuario
-    const allTasks = await prisma.tasks.findMany({
-      where: {
-        userId: userId.toString(),
-        timerMinutes: { not: null },
-        completed: false,
-      },
-      orderBy: [
-        { ExecutionDate: "asc" },
-        { priority: "desc" },
-        { createdAt: "asc" },
-      ],
-    });
-
-    // Obtener timezone del usuario
     const user = await prisma.user.findUnique({
       where: { id: userId.toString() },
       select: { timezone: true },
     });
 
     const userTimezone = user?.timezone || "UTC";
-    console.log("🌍 Zona horaria del usuario:", userTimezone);
-    // Fecha de hoy en la zona del usuario
-    const today = new Date().toLocaleDateString("en-CA", {
-      timeZone: userTimezone,
+    const todayStart = getStartOfDay(userTimezone);
+    const todayEnd = getEndOfDay(userTimezone);
+
+    const tasksToday = await prisma.tasks.findMany({
+      where: {
+        userId: userId.toString(),
+        timerMinutes: { not: null },
+        completed: false,
+        ExecutionDate: { gte: todayStart, lte: todayEnd },
+      },
     });
-
-    console.log("🔍 Filtrando tareas para:", today);
-
-    // Filtrar en JavaScript
-    const tasksToday = allTasks.filter((task) => {
-      // Incluir tareas sin fecha
-      if (!task.ExecutionDate) return true;
-
-      // Convertir ExecutionDate a string de fecha en la zona del usuario
-      const taskDate = task.ExecutionDate.toLocaleDateString("en-CA", {
-        timeZone: userTimezone,
-      });
-
-      return taskDate === today;
-    });
-
-    console.log("✅ Tareas encontradas:", tasksToday.length);
-    console.log(
-      "📋 Tiempos:",
-      tasksToday.map((t) => ({
-        timer: t.timerMinutes,
-      })),
-    );
 
     const total = tasksToday.reduce((sum, task) => {
       return sum + (task.timerMinutes || 0);
     }, 0);
-    console.log("⏱️ Total de minutos:", total);
     return total;
   } catch (error) {
-    console.error("❌ Error obteniendo total de tiempo:", error);
+    console.error("Error obteniendo total de tiempo:", error);
     return 0;
   }
 };
@@ -289,7 +207,7 @@ interface TaskInput {
 }
 
 export async function createTask(task: TaskInput) {
-  const userId = await getUserIdFromSession();
+  const userId = await getCurrentUserId();
   if (!userId) {
     throw new Error("No autenticado: no hay userId en la sesión");
   }
@@ -323,7 +241,7 @@ export async function createTask(task: TaskInput) {
 }
 
 export const updateTask = async ({ task }: Itask) => {
-  const userId = await getUserIdFromSession();
+  const userId = await getCurrentUserId();
   if (!userId) {
     throw new Error("No autenticado: no hay userId en la sesión");
   }
@@ -343,13 +261,13 @@ export const updateTask = async ({ task }: Itask) => {
 
     return updateTask;
   } catch (error) {
-    return error;
+    throw error;
   }
 };
 
 /////////////////////changes complete status/////////////////////
 export const updateStatusTask = async (id: string, completed: boolean) => {
-  const userId = await getUserIdFromSession();
+  const userId = await getCurrentUserId();
   if (!userId) {
     throw new Error("No autenticado: no hay userId en la sesión");
   }
@@ -369,17 +287,29 @@ export const updateStatusTask = async (id: string, completed: boolean) => {
 
     await updateStreakOnTaskToggle();
 
+    if (completed) {
+      const profile = await prisma.playerProfile.findUnique({ where: { userId: userId.toString() } });
+      if (profile) {
+        const todayStr = new Date().toISOString().slice(0, 10);
+        await prisma.dailyLog.upsert({
+          where: { playerId_date: { playerId: profile.id, date: todayStr } },
+          create: { playerId: profile.id, date: todayStr, tasksCompleted: 1 },
+          update: { tasksCompleted: { increment: 1 } },
+        });
+      }
+    }
+
     revalidatePath("/");
 
     return updateTask;
   } catch (error) {
-    return error;
+    throw error;
   }
 };
 
 /////////////////////delete x id/////////////////////
 export const deleteTaskXid = async (id: string) => {
-  const userId = await getUserIdFromSession();
+  const userId = await getCurrentUserId();
   if (!userId) {
     throw new Error("No autenticado: no hay userId en la sesión");
   }
@@ -398,13 +328,13 @@ export const deleteTaskXid = async (id: string) => {
     revalidatePath("/");
     return deleteTask;
   } catch (error) {
-    return error;
+    throw error;
   }
 };
 
 /////DELETE TASK COMPLETE
 export const deleteTasksCompleted = async () => {
-  const userId = await getUserIdFromSession();
+  const userId = await getCurrentUserId();
   if (!userId) {
     throw new Error("No autenticado: no hay userId en la sesión");
   }
@@ -417,7 +347,7 @@ export const deleteTasksCompleted = async () => {
     }
 
     const deleteTask = await prisma.tasks.deleteMany({
-      where: { completed: true },
+      where: { completed: true, userId: userId.toString() },
     });
     revalidatePath("/");
     return deleteTask;
@@ -449,7 +379,7 @@ export async function ensureDefaultCategories(userId: string) {
 }
 
 export async function getCategories() {
-  const userId = await getUserIdFromSession();
+  const userId = await getCurrentUserId();
   if (!userId) throw new Error("No autenticado");
 
   const uid = userId.toString();
@@ -462,7 +392,7 @@ export async function getCategories() {
 }
 
 export async function createCategory(name: string, color: string = "#3b82f6") {
-  const userId = await getUserIdFromSession();
+  const userId = await getCurrentUserId();
   if (!userId) throw new Error("No autenticado");
 
   return prisma.category.create({
@@ -478,7 +408,7 @@ export async function updateCategory(
   id: string,
   data: { name?: string; color?: string },
 ) {
-  const userId = await getUserIdFromSession();
+  const userId = await getCurrentUserId();
   if (!userId) throw new Error("No autenticado");
 
   return prisma.category.update({
@@ -488,7 +418,7 @@ export async function updateCategory(
 }
 
 export async function deleteCategory(id: string) {
-  const userId = await getUserIdFromSession();
+  const userId = await getCurrentUserId();
   if (!userId) throw new Error("No autenticado");
 
   await prisma.tasks.updateMany({
@@ -510,7 +440,9 @@ export async function deleteCategory(id: string) {
  * - Calcula timerEndsAt = now + seconds, set timerRunning = true.
  */
 export async function startTaskTimer(taskId: string, minutes?: number) {
-  const task = await prisma.tasks.findUnique({ where: { id: taskId } });
+  const userId = await getCurrentUserId();
+  if (!userId) throw new Error("No autenticado");
+  const task = await prisma.tasks.findFirst({ where: { id: taskId, userId: userId.toString() } });
   if (!task) throw new Error("Task not found");
 
   // determinar segundos a usar
@@ -542,7 +474,7 @@ export async function startTaskTimer(taskId: string, minutes?: number) {
     },
   });
 
-  // revalidatePath("/tasks");
+  revalidatePath("/");
   return updated;
 }
 
@@ -551,7 +483,9 @@ export async function startTaskTimer(taskId: string, minutes?: number) {
  * limpia timerEndsAt y set timerRunning = false.
  */
 export async function pauseTaskTimer(taskId: string) {
-  const task = await prisma.tasks.findUnique({ where: { id: taskId } });
+  const userId = await getCurrentUserId();
+  if (!userId) throw new Error("No autenticado");
+  const task = await prisma.tasks.findFirst({ where: { id: taskId, userId: userId.toString() } });
   if (!task) throw new Error("Task not found");
 
   if (!task.timerRunning || !task.timerEndsAt) {
@@ -577,7 +511,7 @@ export async function pauseTaskTimer(taskId: string) {
     },
   });
 
-  // revalidatePath("/tasks");
+  revalidatePath("/");
   return updated;
 }
 
@@ -585,6 +519,10 @@ export async function pauseTaskTimer(taskId: string) {
  * Detiene y limpia el temporizador (stop): borra timerStartedAt, timerEndsAt, timerRemainingSeconds y set running false.
  */
 export async function stopTaskTimer(taskId: string) {
+  const userId = await getCurrentUserId();
+  if (!userId) throw new Error("No autenticado");
+  const existing = await prisma.tasks.findFirst({ where: { id: taskId, userId: userId.toString() } });
+  if (!existing) throw new Error("Task not found");
   const updated = await prisma.tasks.update({
     where: { id: taskId },
     data: {
@@ -594,19 +532,26 @@ export async function stopTaskTimer(taskId: string) {
       timerStartedAt: null,
     },
   });
-  // revalidatePath("/tasks");
+  revalidatePath("/");
   return updated;
 }
 
 /* -------------------- Profile stats -------------------- */
 
 export async function getProfileStats(startDate?: string, endDate?: string) {
-  const userId = await getUserIdFromSession();
+  const userId = await getCurrentUserId();
   if (!userId) throw new Error("No autenticado");
   const uid = userId.toString();
 
+  const taskWhere: Record<string, unknown> = { userId: uid };
+  if (startDate || endDate) {
+    (taskWhere as { updatedAt?: Record<string, Date> }).updatedAt = {};
+    if (startDate) (taskWhere.updatedAt as Record<string, Date>).gte = new Date(startDate);
+    if (endDate) (taskWhere.updatedAt as Record<string, Date>).lte = new Date(endDate + "T23:59:59.999Z");
+  }
+
   const [tasks, categories, user] = await Promise.all([
-    prisma.tasks.findMany({ where: { userId: uid } }),
+    prisma.tasks.findMany({ where: taskWhere as { userId: string } }),
     prisma.category.findMany({ where: { userId: uid } }),
     prisma.user.findUnique({
       where: { id: uid },
@@ -622,18 +567,7 @@ export async function getProfileStats(startDate?: string, endDate?: string) {
     0,
   );
 
-  const allCompleted = tasks.filter((t) => t.completed);
-
-  // Apply date filter for category / top-tasks calculations
-  const completed =
-    startDate || endDate
-      ? allCompleted.filter((t) => {
-          const date = t.updatedAt.toISOString().slice(0, 10);
-          if (startDate && date < startDate) return false;
-          if (endDate && date > endDate) return false;
-          return true;
-        })
-      : allCompleted;
+  const completed = tasks.filter((t) => t.completed);
 
   const categoryMap = new Map(categories.map((c) => [c.id, c]));
   const categoryDistribution = categories.map((cat) => {

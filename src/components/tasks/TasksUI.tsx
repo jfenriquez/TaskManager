@@ -20,6 +20,7 @@ import { Task, NewTaskForm, FilterType } from "@/src/types/task.types";
 import TaskTotalTime from "./TaskTotalTime";
 import { getCategories, getTasksByDate } from "@/src/actions/taskActions";
 import MonthlyGoal from "@/src/components/goal/MonthlyGoal";
+import { mapPrismaTaskToTask } from "@/src/utils/mapTask";
 
 interface TasksProps {
   data?: Tasks[];
@@ -53,10 +54,9 @@ export default function TasksUI({ data = [] }: TasksProps) {
   });
   const [editingTask, setEditingTask] = useState<Task | null>(null);
 
-  // Hooks personalizados
   const {
     tasks,
-    setTasks,
+    replaceTasks,
     isPending,
     handleAddTask,
     deleteTask,
@@ -105,37 +105,19 @@ export default function TasksUI({ data = [] }: TasksProps) {
     setDateLoading(true);
     try {
       const fetched = await getTasksByDate(dateStr);
-      setTasks(
-        fetched.map((task) => ({
-          id: task.id,
-          title: task.title,
-          description: task.description,
-          completed: task.completed,
-          timerMinutes: task.timerMinutes ?? null,
-          timerStartedAt: task.timerStartedAt
-            ? new Date(task.timerStartedAt).toISOString()
-            : null,
-          timerEndsAt: task.timerEndsAt
-            ? new Date(task.timerEndsAt).toISOString()
-            : null,
-          timerRemainingSeconds: task.timerRemainingSeconds ?? null,
-          timerRunning: task.timerRunning ?? false,
-          priority: task.priority as "LOW" | "MEDIUM" | "HIGH" | null,
-          categoryId: task.categoryId ?? null,
-        }))
-      );
+      replaceTasks(fetched.map(mapPrismaTaskToTask));
     } catch (err) {
       console.error("Error fetching tasks for date:", err);
     } finally {
       setDateLoading(false);
     }
-  }, [setTasks]);
+  }, [replaceTasks]);
 
   useEffect(() => {
-    queueMicrotask(() => fetchTasksForDate(selectedDate));
+    fetchTasksForDate(selectedDate);
   }, [selectedDate, fetchTasksForDate]);
 
-  const handleTimerEnd = (taskId: string) => {
+  const handleTimerEnd = useCallback((taskId: string) => {
     setHighlightTask(taskId);
     setTimeout(
       () => setHighlightTask((prev) => (prev === taskId ? null : prev)),
@@ -156,7 +138,7 @@ export default function TasksUI({ data = [] }: TasksProps) {
     });
 
     stopTimer(taskId);
-  };
+  }, [tasks, stopTimer]);
 
   const { counts, formatRemaining, markStoppedByUser } = useTimer({
     tasks,

@@ -1,6 +1,6 @@
 // utils/taskUtils.ts
 
-import { Task, TaskStats, FilterType } from "../types/task.types";
+import { Task, TaskStats, FilterType } from "@/src/types/task.types";
 
 export function calculateStats(tasks: Task[]): TaskStats {
   return {

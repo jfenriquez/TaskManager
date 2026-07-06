@@ -30,9 +30,9 @@ export default function CategoriesPage() {
   const [color, setColor] = useState(PRESET_COLORS[0]);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user?.id) return;
     getCategories().then(setCategories).catch(console.error);
-  }, [user]);
+  }, [user?.id]);
 
   if (isLoading) {
     return (

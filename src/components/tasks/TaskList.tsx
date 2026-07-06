@@ -2,7 +2,7 @@
 
 import React from "react";
 import TaskItem from "./TaskItem";
-import { Task, TimerState } from "../../types/task.types";
+import { Task, TimerState } from "@/src/types/task.types";
 
 interface TaskListProps {
   tasks: Task[];

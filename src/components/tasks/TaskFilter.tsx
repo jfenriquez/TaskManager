@@ -2,7 +2,7 @@
 
 import React from "react";
 import { FaPlus } from "react-icons/fa";
-import { FilterType } from "../../types/task.types";
+import { FilterType } from "@/src/types/task.types";
 
 interface TaskFilterProps {
   filter: FilterType;

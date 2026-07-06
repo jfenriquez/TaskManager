@@ -11,6 +11,7 @@ export default function Navbar() {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [logoutError, setLogoutError] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
+  const [imgError, setImgError] = useState(false);
   const navRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
@@ -100,18 +101,11 @@ export default function Navbar() {
                 aria-label="Menú de usuario"
               >
                 <div className="w-10 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2">
-                  {session.user.image ? (
+                  {session.user.image && !imgError ? (
                     <img
                       src={session.user.image}
                       alt={session.user.name || "Usuario"}
-                      onError={(e) => {
-                        e.currentTarget.style.display = "none";
-                        e.currentTarget.parentElement!.innerHTML = `
-                          <div class="bg-primary text-primary-content w-full h-full flex items-center justify-center text-xl font-bold">
-                            ${session.user.name?.charAt(0).toUpperCase() || "U"}
-                          </div>
-                        `;
-                      }}
+                      onError={() => setImgError(true)}
                     />
                   ) : (
                     <div className="bg-primary text-primary-content w-full h-full flex items-center justify-center text-xl font-bold">
@@ -166,6 +160,14 @@ export default function Navbar() {
                       <path strokeLinecap="round" strokeLinejoin="round" d="M6 6h.008v.008H6V6z" />
                     </svg>
                     Categorías
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/hyde-slayer" className="flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
+                    </svg>
+                    Hyde Slayer
                   </Link>
                 </li>
                 <li>

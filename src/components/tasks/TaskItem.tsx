@@ -3,7 +3,7 @@
 import React from "react";
 import { FaTrash, FaEdit } from "react-icons/fa";
 import TaskTimerControls from "./TaskTimerControls";
-import { Task, TimerState } from "../../types/task.types";
+import { Task, TimerState } from "@/src/types/task.types";
 
 interface TaskItemProps {
   task: Task;

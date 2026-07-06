@@ -23,6 +23,11 @@ export default function TimezoneSelector({
     value || "America/Bogota"
   );
   const [detectedTimezone, setDetectedTimezone] = useState<string>("");
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     // Auto-detectar timezone del navegador
@@ -90,11 +95,13 @@ export default function TimezoneSelector({
 
       <p className="text-xs text-gray-500">
         Hora actual:{" "}
-        {new Date().toLocaleString("es-ES", {
-          timeZone: selectedTimezone,
-          dateStyle: "short",
-          timeStyle: "short",
-        })}
+        {mounted
+          ? new Date().toLocaleString("es-ES", {
+              timeZone: selectedTimezone,
+              dateStyle: "short",
+              timeStyle: "short",
+            })
+          : "---"}
       </p>
     </div>
   );

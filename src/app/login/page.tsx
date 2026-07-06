@@ -1,18 +1,82 @@
 "use client";
 
 import { authClient } from "@/src/lib/auth-client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { gsap } from "gsap";
 import { useAuth } from "@/src/hooks/useAuth";
+
+function ResendVerification() {
+  const [email, setEmail] = useState("");
+  const [sent, setSent] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState("");
+
+  const handleResend = async (e: FormEvent) => {
+    e.preventDefault();
+    setErr("");
+    setLoading(true);
+    try {
+      const res = await fetch("/api/auth/send-verification-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      if (!res.ok) throw new Error();
+      setSent(true);
+    } catch {
+      setErr("Error al reenviar. Intenta de nuevo.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (sent) return <p className="text-xs text-success">Email reenviado. Revisa tu bandeja.</p>;
+
+  return (
+    <div>
+      <button onClick={() => setShowForm(!showForm)} className="link link-hover text-xs text-base-content/50">
+        ¿No recibiste el email de verificación?
+      </button>
+      {showForm && (
+        <form onSubmit={handleResend} className="flex gap-2 mt-2 justify-center">
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="tu@email.com"
+            required
+            className="input input-bordered input-xs w-44"
+          />
+          <button type="submit" className="btn btn-primary btn-xs" disabled={loading}>
+            {loading ? <span className="loading loading-spinner loading-xs"></span> : "Reenviar"}
+          </button>
+        </form>
+      )}
+      {err && <p className="text-xs text-error mt-1">{err}</p>}
+    </div>
+  );
+}
+
+const REMEMBER_KEY = "taskmanager_remember";
 
 export default function LoginPage() {
   const router = useRouter();
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [savedEmail, setSavedEmail] = useState("");
+  const [rememberMe] = useState(() =>
+    typeof window !== "undefined" ? !!localStorage.getItem(REMEMBER_KEY) : false
+  );
   const containerRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
+
+  useEffect(() => {
+    const stored = localStorage.getItem(REMEMBER_KEY);
+    if (stored) setSavedEmail(stored);
+  }, []);
 
   useEffect(() => {
     if (!isAuthLoading && isAuthenticated) {
@@ -21,7 +85,6 @@ export default function LoginPage() {
   }, [isAuthenticated, isAuthLoading, router]);
 
   useEffect(() => {
-    // Animación de entrada con GSAP
     const ctx = gsap.context(() => {
       gsap.from(containerRef.current, {
         opacity: 0,
@@ -59,10 +122,15 @@ export default function LoginPage() {
 
     try {
       const formData = new FormData(e.currentTarget);
+      const email = formData.get("email") as string;
+      const remember = formData.get("rememberMe") === "on";
       await authClient.signIn.email({
-        email: formData.get("email") as string,
+        email,
         password: formData.get("password") as string,
+        rememberMe: remember,
       });
+      if (remember) localStorage.setItem(REMEMBER_KEY, email);
+      else localStorage.removeItem(REMEMBER_KEY);
     } catch {
       setError("Error al iniciar sesión. Verifica tus credenciales.");
 
@@ -151,35 +219,38 @@ export default function LoginPage() {
                 <span className="label-text font-medium">Email</span>
               </label>
               <input
-                type="email"
-                name="email"
-                placeholder="tu@email.com"
-                className="input input-bordered w-full focus:input-primary"
-                required
-                disabled={isLoading}
-              />
+                  type="email"
+                  name="email"
+                  defaultValue={savedEmail}
+                  placeholder="tu@email.com"
+                  autoComplete="email"
+                  className="input input-bordered w-full focus:input-primary"
+                  required
+                  disabled={isLoading}
+                />
             </div>
 
             <div className="form-control form-element">
               <label className="label">
                 <span className="label-text font-medium">Contraseña</span>
-                <a href="#" className="label-text-alt link link-hover">
+                <a href="/forgot-password" className="label-text-alt link link-hover">
                   ¿Olvidaste tu contraseña?
                 </a>
               </label>
-              <input
-                type="password"
-                name="password"
-                placeholder="••••••••"
-                className="input input-bordered w-full focus:input-primary"
-                required
-                disabled={isLoading}
-              />
+                <input
+                  type="password"
+                  name="password"
+                  placeholder="••••••••"
+                  autoComplete="current-password"
+                  className="input input-bordered w-full focus:input-primary"
+                  required
+                  disabled={isLoading}
+                />
             </div>
 
             <div className="form-control form-element">
               <label className="label cursor-pointer justify-start gap-3">
-                <input type="checkbox" className="checkbox checkbox-primary" />
+                <input type="checkbox" name="rememberMe" defaultChecked={rememberMe} className="checkbox checkbox-primary" />
                 <span className="label-text">Recordarme</span>
               </label>
             </div>
@@ -243,8 +314,9 @@ export default function LoginPage() {
             </button>
           </div>
 
-          {/* Sign Up Link */}
-          <div className="text-center mt-6 form-element">
+          {/* Resend verification + Sign Up */}
+          <div className="text-center mt-4 form-element space-y-1">
+            <ResendVerification />
             <p className="text-sm text-base-content/60">
               ¿No tienes una cuenta?{" "}
               <a href="/register" className="link link-primary font-semibold">

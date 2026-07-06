@@ -5,6 +5,8 @@ import { useAuth } from "@/src/hooks/useAuth";
 import { getProfileStats } from "@/src/actions/taskActions";
 import { useUserTimezone } from "@/src/hooks/useUserTimezone";
 import StreakDisplay from "@/src/components/streak/StreakDisplay";
+import Link from "next/link";
+import { Swords } from "lucide-react";
 import {
   Chart as ChartJS,
   ArcElement,
@@ -226,7 +228,7 @@ export default function ProfilePage() {
 
   useEffect(() => {
     loadStats();
-  }, [user]);
+  }, [user?.id]);
 
   const applyFilter = () => loadStats(startDate || undefined, endDate || undefined);
   const clearFilter = () => {
@@ -310,7 +312,46 @@ export default function ProfilePage() {
               ))}
             </div>
 
-            {/* Streak + Timezone row */}
+            {/* Hyde Slayer CTA */}
+          <Link href="/hyde-slayer">
+            <div
+              className="card p-6 border cursor-pointer hover:scale-[1.01] transition-all duration-300 group"
+              style={{
+                background: "linear-gradient(135deg, #0f0f2a, #1a1a3e)",
+                borderColor: "rgba(124,58,237,0.3)",
+                boxShadow: "0 0 40px rgba(124,58,237,0.1)",
+              }}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div
+                    className="w-14 h-14 rounded-2xl flex items-center justify-center"
+                    style={{
+                      background: "linear-gradient(135deg, #7c3aed, #3b82f6)",
+                    }}
+                  >
+                    <Swords className="w-7 h-7 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-white">HYDE SLAYER</h3>
+                    <p className="text-sm text-purple-300/60">
+                      Derrota a Hyde. Construye disciplina. Juega al RPG psicológico.
+                    </p>
+                  </div>
+                </div>
+                <div
+                  className="px-4 py-2 rounded-xl text-sm font-bold text-white group-hover:scale-105 transition-transform"
+                  style={{
+                    background: "linear-gradient(135deg, #7c3aed, #3b82f6)",
+                  }}
+                >
+                  Jugar ahora →
+                </div>
+              </div>
+            </div>
+          </Link>
+
+          {/* Streak + Timezone row */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <StreakDisplay />
               <div className="card bg-base-100 shadow-xl border border-base-300 p-6">

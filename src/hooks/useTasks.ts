@@ -1,6 +1,6 @@
 // hooks/useTasks.ts
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useCallback, useRef } from "react";
 import { Tasks } from "@prisma/client";
 import {
   deleteTasksCompleted,
@@ -12,32 +12,19 @@ import {
   pauseTaskTimer,
   stopTaskTimer,
 } from "@/src/actions/taskActions";
-import { Task, NewTaskForm } from "../types/task.types";
+import { Task, NewTaskForm } from "@/src/types/task.types";
+import { mapPrismaTaskToTask } from "@/src/utils/mapTask";
 
 export function useTasks(initialData: Tasks[] = []) {
   const [tasks, setTasks] = useState<Task[]>(
-    initialData.map((task) => ({
-      id: task.id,
-      title: task.title,
-      description: task.description,
-      completed: task.completed,
-      timerMinutes: task.timerMinutes ?? null,
-      timerStartedAt: task.timerStartedAt
-        ? new Date(task.timerStartedAt).toISOString()
-        : null,
-      timerEndsAt: task.timerEndsAt
-        ? new Date(task.timerEndsAt).toISOString()
-        : null,
-      timerRemainingSeconds: task.timerRemainingSeconds ?? null,
-      timerRunning: task.timerRunning ?? false,
-      priority: task.priority as "LOW" | "MEDIUM" | "HIGH" | null,
-      categoryId: task.categoryId ?? null,
-    }))
+    initialData.map(mapPrismaTaskToTask)
   );
 
   const [isPending, startTransitionLocal] = useTransition();
+  const tasksRef = useRef(tasks);
+  tasksRef.current = tasks;
 
-  const handleAddTask = async (newTask: NewTaskForm) => {
+  const handleAddTask = useCallback(async (newTask: NewTaskForm) => {
     const tempId = `temp-${Date.now()}`;
     const optimisticTask: Task = {
       id: tempId,
@@ -72,9 +59,9 @@ export function useTasks(initialData: Tasks[] = []) {
         console.error("Error creando tarea:", err);
       }
     });
-  };
+  }, []);
 
-  const deleteTask = (id: string) => {
+  const deleteTask = useCallback((id: string) => {
     setTasks((prev) => prev.filter((t) => t.id !== id));
     startTransitionLocal(async () => {
       try {
@@ -83,26 +70,22 @@ export function useTasks(initialData: Tasks[] = []) {
         console.error(err);
       }
     });
-  };
+  }, []);
 
-  const toggleComplete = (id: string) => {
-    const current = tasks.find((t) => t.id === id);
-    if (!current) return;
-
-    setTasks((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t))
-    );
-
+  const toggleComplete = useCallback((id: string) => {
+    const current = tasksRef.current.find((t) => t.id === id);
+    const newCompleted = !current?.completed;
+    setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, completed: newCompleted } : t)));
     startTransitionLocal(async () => {
       try {
-        await updateStatusTask(id, !current.completed);
+        await updateStatusTask(id, newCompleted);
       } catch (err) {
         console.error(err);
       }
     });
-  };
+  }, []);
 
-  const handleUpdateTask = (updatedTask: Task) => {
+  const handleUpdateTask = useCallback((updatedTask: Task) => {
     setTasks((prev) =>
       prev.map((t) => (t.id === updatedTask.id ? updatedTask : t))
     );
@@ -117,17 +100,14 @@ export function useTasks(initialData: Tasks[] = []) {
         categoryId: updatedTask.categoryId ?? null,
       },
     }).catch((err) => console.error(err));
-  };
+  }, []);
 
-  const deleteAllCompleted = async () => {
+  const deleteAllCompleted = useCallback(async () => {
     await deleteTasksCompleted();
     setTasks((prev) => prev.filter((t) => !t.completed));
-  };
+  }, []);
 
-  const handleStartTimer = (taskId: string, minutes?: number) => {
-    const task = tasks.find((t) => t.id === taskId);
-    if (!task) return;
-
+  const handleStartTimer = useCallback((taskId: string, minutes?: number) => {
     startTransitionLocal(async () => {
       try {
         const updated = await startTaskTimer(taskId, minutes);
@@ -141,9 +121,9 @@ export function useTasks(initialData: Tasks[] = []) {
         alert("No se pudo iniciar el temporizador: " + errorMessage);
       }
     });
-  };
+  }, []);
 
-  const handlePauseTimer = (taskId: string) => {
+  const handlePauseTimer = useCallback((taskId: string) => {
     startTransitionLocal(async () => {
       try {
         const updated = await pauseTaskTimer(taskId);
@@ -154,9 +134,9 @@ export function useTasks(initialData: Tasks[] = []) {
         console.error(err);
       }
     });
-  };
+  }, []);
 
-  const handleStopTimer = (taskId: string) => {
+  const handleStopTimer = useCallback((taskId: string) => {
     startTransitionLocal(async () => {
       try {
         const updated = await stopTaskTimer(taskId);
@@ -167,12 +147,16 @@ export function useTasks(initialData: Tasks[] = []) {
         console.error(err);
       }
     });
-  };
+  }, []);
+
+  const replaceTasks = useCallback((newTasks: Task[]) => {
+    setTasks(newTasks);
+  }, []);
 
   return {
     tasks,
-    setTasks,
     isPending,
+    replaceTasks,
     handleAddTask,
     deleteTask,
     toggleComplete,

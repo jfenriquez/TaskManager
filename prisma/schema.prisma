@@ -7,56 +7,70 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ═══════════════════════════════════════════════════════════════
+// ENUMS
+// ═══════════════════════════════════════════════════════════════
+
 enum PriorityEnum {
   LOW
   MEDIUM
   HIGH
 }
 
-model Category {
-  id        String  @id @default(cuid())
-  name      String
-  color     String  @default("#3b82f6")
-  userId    String
-  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tasks     Tasks[]
-
-  @@map("category")
+enum Role {
+  USER
+  ADMIN
+  MODERATOR
 }
 
-model Tasks {
-  id                    String       @id @default(cuid())
-  title                 String
-  description           String?
-  completed             Boolean      @default(false)
-  createdAt             DateTime     @default(now())
-  updatedAt             DateTime     @updatedAt
-  userId                String
-  user                  User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  timerMinutes          Int?
-  timerStartedAt        DateTime?
-  timerEndsAt           DateTime?
-  timerRemainingSeconds Int?
-  timerRunning          Boolean      @default(false)
-  priority              PriorityEnum @default(MEDIUM)
-  ExecutionDate         DateTime?    @default(now())
-  categoryId            String?
-  category              Category?    @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+enum BattleResult {
+  VICTORY
+  DEFEAT
+  FLEE
 }
 
-model Goal {
-  id        String   @id @default(cuid())
-  userId    String
-  title     String
-  completed Boolean  @default(false)
-  month     String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, month])
-  @@map("goal")
+enum PactStatus {
+  ACTIVE
+  COMPLETED
+  FAILED
+  CANCELLED
 }
+
+enum PactDifficulty {
+  EASY
+  MEDIUM
+  HARD
+  IMPOSSIBLE
+}
+
+enum ItemRarity {
+  COMMON
+  UNCOMMON
+  RARE
+  EPIC
+  LEGENDARY
+}
+
+enum ItemType {
+  WEAPON
+  ARMOR
+  CONSUMABLE
+  KEY_ITEM
+  BOOST
+}
+
+enum AchievementCategory {
+  COMBAT
+  GOALS
+  PACTS
+  VITAMENTES
+  STREAK
+  GENERAL
+}
+
+// ═══════════════════════════════════════════════════════════════
+// AUTH — better-auth models (no touch)
+// ═══════════════════════════════════════════════════════════════
 
 model User {
   id            String    @id
@@ -75,13 +89,10 @@ model User {
   streak        Int       @default(0)
   timezone      String    @default("UTC")
 
-  @@map("user")
-}
+  // Hyde-Slayer
+  playerProfile PlayerProfile?
 
-enum Role {
-  USER
-  ADMIN
-  MODERATOR
+  @@map("user")
 }
 
 model Session {
@@ -135,4 +146,392 @@ model Jwks {
   createdAt  DateTime
 
   @@map("jwks")
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TASK MANAGEMENT
+// ═══════════════════════════════════════════════════════════════
+
+model Category {
+  id        String  @id @default(cuid())
+  name      String
+  color     String  @default("#3b82f6")
+  userId    String
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tasks     Tasks[]
+  goals     Goal[]
+
+  @@index([userId])
+  @@map("category")
+}
+
+model Tasks {
+  id                    String       @id @default(cuid())
+  title                 String
+  description           String?
+  completed             Boolean      @default(false)
+  createdAt             DateTime     @default(now())
+  updatedAt             DateTime     @updatedAt
+  userId                String
+  user                  User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  timerMinutes          Int?
+  timerStartedAt        DateTime?
+  timerEndsAt           DateTime?
+  timerRemainingSeconds Int?
+  timerRunning          Boolean      @default(false)
+  priority              PriorityEnum @default(MEDIUM)
+  ExecutionDate         DateTime?    @default(now())
+  categoryId            String?
+  category              Category?    @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  @@index([userId, ExecutionDate])
+  @@index([userId, completed])
+  @@index([userId, priority])
+}
+
+model Goal {
+  id            String       @id @default(cuid())
+  userId        String
+  title         String
+  description   String?
+  completed     Boolean      @default(false)
+  month         String?
+  purpose       String?
+  visualization String?
+  hydeAnswers   Json?
+  missions      Json?
+  timeline      DateTime?
+  priority      PriorityEnum @default(MEDIUM)
+  categoryId    String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category      Category?    @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  @@index([userId, month])
+  @@map("goal")
+}
+
+// ═══════════════════════════════════════════════════════════════
+// HYDE-SLAYER — Player Profile
+// ═══════════════════════════════════════════════════════════════
+
+model PlayerProfile {
+  id         String   @id @default(cuid())
+  userId     String   @unique
+  level      Int      @default(1)
+  xp         Int      @default(0)
+  coins      Int      @default(0)
+  discipline Int      @default(0)
+  playerName String   @default("Guerrero")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user             User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  xpLogs           XpLog[]
+  inventoryItems   Inventory[]
+  activePacts      PlayerPact[]
+  castleProgress   CastleProgress[]
+  battleLogs       BattleLog[]
+  vitamenteLogs    VitamenteLog[]
+  relaxationLogs   RelaxationLog[]
+  achievements     PlayerAchievement[]
+  dailyLogs        DailyLog[]
+
+  @@map("player_profile")
+}
+
+// ═══════════════════════════════════════════════════════════════
+// HYDE-SLAYER — XP & Progression
+// ═══════════════════════════════════════════════════════════════
+
+model XpLog {
+  id          String   @id @default(cuid())
+  playerId    String
+  amount      Int
+  source      String
+  description String?
+  createdAt   DateTime @default(now())
+
+  player PlayerProfile @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@index([playerId, createdAt])
+  @@map("xp_log")
+}
+
+model DailyLog {
+  id              String   @id @default(cuid())
+  playerId        String
+  date            String
+  tasksCompleted  Int      @default(0)
+  goalsProgress   Int      @default(0)
+  xpEarned        Int      @default(0)
+  battleCount     Int      @default(0)
+  createdAt       DateTime @default(now())
+
+  player PlayerProfile @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@unique([playerId, date])
+  @@index([playerId, date])
+  @@map("daily_log")
+}
+
+// ═══════════════════════════════════════════════════════════════
+// HYDE-SLAYER — Vitamentes (Affirmations)
+// ═══════════════════════════════════════════════════════════════
+
+model Vitamente {
+  id          String   @id @default(cuid())
+  title       String
+  content     String
+  category    String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  logs VitamenteLog[]
+
+  @@map("vitamente")
+}
+
+model VitamenteLog {
+  id          String   @id @default(cuid())
+  playerId    String
+  vitamenteId String
+  completedAt DateTime @default(now())
+
+  player    PlayerProfile @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  vitamente Vitamente     @relation(fields: [vitamenteId], references: [id], onDelete: Cascade)
+
+  @@unique([playerId, vitamenteId, completedAt])
+  @@index([playerId, completedAt])
+  @@map("vitamente_log")
+}
+
+// ═══════════════════════════════════════════════════════════════
+// HYDE-SLAYER — Relaxation Exercises
+// ═══════════════════════════════════════════════════════════════
+
+model RelaxationExercise {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  duration    Int
+  type        String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  logs RelaxationLog[]
+
+  @@map("relaxation_exercise")
+}
+
+model RelaxationLog {
+  id          String   @id @default(cuid())
+  playerId    String
+  exerciseId  String
+  duration    Int
+  completedAt DateTime @default(now())
+
+  player   PlayerProfile      @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  exercise RelaxationExercise @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+
+  @@index([playerId, completedAt])
+  @@map("relaxation_log")
+}
+
+// ═══════════════════════════════════════════════════════════════
+// HYDE-SLAYER — Enemies & Battle System
+// ═══════════════════════════════════════════════════════════════
+
+model HydeEnemy {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  level       Int      @default(1)
+  hp          Int
+  attack      Int
+  defense     Int
+  xpReward    Int      @default(50)
+  coinReward  Int      @default(10)
+  imageUrl    String?
+  isBoss      Boolean  @default(false)
+  castleLevel Int?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  bossOfCastle CastleLevel? @relation("CastleBoss")
+  battleLogs   BattleLog[]
+
+  @@index([castleLevel])
+  @@map("hyde_enemy")
+}
+
+model BattleLog {
+  id          String        @id @default(cuid())
+  playerId    String
+  enemyId     String
+  result      BattleResult
+  damageDealt Int           @default(0)
+  damageTaken Int           @default(0)
+  xpEarned    Int           @default(0)
+  coinsEarned Int           @default(0)
+  duration    Int?
+  createdAt   DateTime      @default(now())
+
+  player PlayerProfile @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  enemy  HydeEnemy     @relation(fields: [enemyId], references: [id], onDelete: Cascade)
+
+  @@index([playerId, createdAt])
+  @@map("battle_log")
+}
+
+// ═══════════════════════════════════════════════════════════════
+// HYDE-SLAYER — Castle (Boss Progression)
+// ═══════════════════════════════════════════════════════════════
+
+model CastleLevel {
+  id          String   @id @default(cuid())
+  level       Int      @unique
+  name        String
+  description String?
+  bossId      String?   @unique
+  xpRequired  Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  boss     HydeEnemy?       @relation("CastleBoss", fields: [bossId], references: [id], onDelete: SetNull)
+  progress CastleProgress[]
+
+  @@map("castle_level")
+}
+
+model CastleProgress {
+  id            String   @id @default(cuid())
+  playerId      String
+  castleLevelId String
+  defeated      Boolean  @default(false)
+  bestTime      Int?
+  attempts      Int      @default(0)
+  firstDefeatedAt DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  player      PlayerProfile @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  castleLevel CastleLevel   @relation(fields: [castleLevelId], references: [id], onDelete: Cascade)
+
+  @@unique([playerId, castleLevelId])
+  @@map("castle_progress")
+}
+
+// ═══════════════════════════════════════════════════════════════
+// HYDE-SLAYER — Items & Inventory
+// ═══════════════════════════════════════════════════════════════
+
+model Item {
+  id          String     @id @default(cuid())
+  name        String
+  description String?
+  type        ItemType
+  rarity      ItemRarity @default(COMMON)
+  effect      Json?
+  iconUrl     String?
+  buyPrice    Int?
+  sellPrice   Int?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  inventory Inventory[]
+
+  @@index([type, rarity])
+  @@map("item")
+}
+
+model Inventory {
+  id         String   @id @default(cuid())
+  playerId   String
+  itemId     String
+  quantity   Int      @default(1)
+  equipped   Boolean  @default(false)
+  acquiredAt DateTime @default(now())
+
+  player PlayerProfile @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  item   Item          @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@unique([playerId, itemId])
+  @@map("inventory")
+}
+
+// ═══════════════════════════════════════════════════════════════
+// HYDE-SLAYER — Pacts (Contracts/Challenges)
+// ═══════════════════════════════════════════════════════════════
+
+model Pact {
+  id                String        @id @default(cuid())
+  title             String
+  description       String?
+  duration          Int
+  difficulty        PactDifficulty @default(MEDIUM)
+  xpReward          Int
+  coinReward        Int
+  disciplineReward  Int            @default(0)
+  requirements      Json?
+  isActive          Boolean        @default(true)
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  players PlayerPact[]
+
+  @@map("pact")
+}
+
+model PlayerPact {
+  id          String     @id @default(cuid())
+  playerId    String
+  pactId      String
+  status      PactStatus @default(ACTIVE)
+  progress    Int        @default(0)
+  startedAt   DateTime   @default(now())
+  completedAt DateTime?
+  failedAt    DateTime?
+
+  player PlayerProfile @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  pact   Pact          @relation(fields: [pactId], references: [id], onDelete: Cascade)
+
+  @@unique([playerId, pactId])
+  @@map("player_pact")
+}
+
+// ═══════════════════════════════════════════════════════════════
+// HYDE-SLAYER — Achievements
+// ═══════════════════════════════════════════════════════════════
+
+model Achievement {
+  id          String              @id @default(cuid())
+  name        String
+  description String?
+  iconUrl     String?
+  category    AchievementCategory
+  condition   Json?
+  xpReward    Int                 @default(100)
+  coinReward  Int                 @default(50)
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  unlocks PlayerAchievement[]
+
+  @@map("achievement")
+}
+
+model PlayerAchievement {
+  id            String   @id @default(cuid())
+  playerId      String
+  achievementId String
+  unlockedAt    DateTime @default(now())
+
+  player      PlayerProfile @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  achievement Achievement   @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+
+  @@unique([playerId, achievementId])
+  @@map("player_achievement")
 }

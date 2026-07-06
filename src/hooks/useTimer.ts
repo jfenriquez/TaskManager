@@ -1,7 +1,5 @@
-// hooks/useTimer.ts
-
 import { useState, useEffect, useRef } from "react";
-import { Task, TimerState } from "../types/task.types";
+import { Task, TimerState } from "@/src/types/task.types";
 
 interface UseTimerProps {
   tasks: Task[];
@@ -12,6 +10,11 @@ export function useTimer({ tasks, onTimerEnd }: UseTimerProps) {
   const [counts, setCounts] = useState<Record<string, TimerState>>({});
   const prevCountsRef = useRef<Record<string, number>>({});
   const stopByUserRef = useRef<Record<string, boolean>>({});
+  const tasksRef = useRef(tasks);
+  const onTimerEndRef = useRef(onTimerEnd);
+
+  tasksRef.current = tasks;
+  onTimerEndRef.current = onTimerEnd;
 
   // Inicializar counts desde tasks
   useEffect(() => {
@@ -28,13 +31,14 @@ export function useTimer({ tasks, onTimerEnd }: UseTimerProps) {
     setCounts(initial);
   }, [tasks]);
 
-  // Tick para actualizar countdowns cada segundo
+  // Tick para actualizar countdowns cada segundo (sin dependencias de tasks)
   useEffect(() => {
     const interval = setInterval(() => {
       setCounts((prev) => {
         const next = { ...prev };
+        const currentTasks = tasksRef.current;
         Object.keys(next).forEach((id) => {
-          const task = tasks.find((t) => t.id === id);
+          const task = currentTasks.find((t) => t.id === id);
           if (!task) return;
 
           if (task.timerRunning && task.timerEndsAt) {
@@ -55,7 +59,7 @@ export function useTimer({ tasks, onTimerEnd }: UseTimerProps) {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [tasks]);
+  }, []);
 
   // Detectar cuando un timer llega a 0
   useEffect(() => {
@@ -63,23 +67,20 @@ export function useTimer({ tasks, onTimerEnd }: UseTimerProps) {
       const prevRem = prevCountsRef.current[taskId] ?? Infinity;
       const curRem = counts[taskId]?.remainingMs ?? 0;
 
-      // Solo disparar si había un valor previo válido (no Infinity) y era mayor a 0
-      // Esto evita que se dispare al añadir nuevas tareas
       if (prevRem !== Infinity && prevRem > 0 && curRem === 0) {
         if (stopByUserRef.current[taskId]) {
           stopByUserRef.current[taskId] = false;
         } else {
-          const task = tasks.find((t) => t.id === taskId);
-          // Solo disparar si el timer estaba realmente corriendo
+          const task = tasksRef.current.find((t) => t.id === taskId);
           if (task && task.timerRunning) {
-            onTimerEnd(taskId);
+            onTimerEndRef.current(taskId);
           }
         }
       }
 
       prevCountsRef.current[taskId] = curRem;
     });
-  }, [counts, tasks, onTimerEnd]);
+  }, [counts]);
 
   const formatRemaining = (ms: number) => {
     if (ms <= 0) return "00:00";

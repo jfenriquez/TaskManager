@@ -1,11 +1,11 @@
 // app/api/user/timezone/route.ts
 import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
-import { getUserIdFromSession } from "@/src/actions/taskActions";
+import { getCurrentUserId } from "@/src/lib/auth-utils";
 
 export async function GET() {
   try {
-    const userId = await getUserIdFromSession();
+    const userId = await getCurrentUserId();
 
     if (!userId) {
       return NextResponse.json({ error: "No autenticado" }, { status: 401 });
@@ -37,7 +37,7 @@ export async function GET() {
 
 export async function PATCH(request: Request) {
   try {
-    const userId = await getUserIdFromSession();
+    const userId = await getCurrentUserId();
 
     if (!userId) {
       return NextResponse.json({ error: "No autenticado" }, { status: 401 });
