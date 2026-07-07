@@ -12,7 +12,7 @@ const publicPaths = [
 
 const staticFilePattern = /\.(json|mp3|ico|svg|png|jpg|jpeg|gif|webp|woff2?|ttf|otf|eot)$/;
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (
