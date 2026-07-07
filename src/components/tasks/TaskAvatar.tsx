@@ -68,9 +68,10 @@ export default function TaskAvatar({
 
     const script = document.createElement("script");
     script.src =
-      "https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js";
+      "https://unpkg.com/@lottiefiles/lottie-player@2.0.4/dist/lottie-player.js";
     script.async = true;
     script.onload = () => queueMicrotask(() => setPlayerReady(true));
+    script.onerror = () => console.warn("Failed to load lottie-player");
     document.body.appendChild(script);
 
     return () => {
