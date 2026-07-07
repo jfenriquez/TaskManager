@@ -10,6 +10,8 @@ const publicPaths = [
   "/unauthorized",
 ];
 
+const staticFilePattern = /\.(json|mp3|ico|svg|png|jpg|jpeg|gif|webp|woff2?|ttf|otf|eot)$/;
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -18,7 +20,8 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith("/api") ||
     pathname === "/" ||
     pathname.startsWith("/_next") ||
-    pathname.startsWith("/favicon")
+    pathname.startsWith("/favicon") ||
+    staticFilePattern.test(pathname)
   ) {
     return NextResponse.next();
   }
@@ -37,5 +40,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|public).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
 };
