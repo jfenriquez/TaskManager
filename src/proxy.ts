@@ -26,9 +26,13 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const sessionCookie =
-    request.cookies.get("better-auth.session_token") ||
+  const sessionToken =
+    request.cookies.get("__Secure-better-auth.session_token") ??
+    request.cookies.get("better-auth.session_token");
+  const sessionData =
+    request.cookies.get("__Secure-better-auth.session_data") ??
     request.cookies.get("better-auth.session_data");
+  const sessionCookie = sessionToken || sessionData;
 
   if (!sessionCookie) {
     const loginUrl = new URL("/login", request.url);
