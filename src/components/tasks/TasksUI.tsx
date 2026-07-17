@@ -18,15 +18,19 @@ import TaskList from "@/src/components/tasks/TaskList";
 import TaskModal from "@/src/components/tasks/TaskModal";
 import { Task, NewTaskForm, FilterType } from "@/src/types/task.types";
 import TaskTotalTime from "./TaskTotalTime";
+
 import { getCategories, getTasksByDate } from "@/src/actions/taskActions";
 import MonthlyGoal from "@/src/components/goal/MonthlyGoal";
 import { mapPrismaTaskToTask } from "@/src/utils/mapTask";
+import { useAppDispatch } from "@/src/store/hooks";
+import { setTotalMinutes } from "@/src/store/taskTimeSlice";
 
 interface TasksProps {
   data?: Tasks[];
 }
 
 export default function TasksUI({ data = [] }: TasksProps) {
+  const dispatch = useAppDispatch();
   const { user } = useAuth();
 
   // Estados locales
@@ -68,16 +72,19 @@ export default function TasksUI({ data = [] }: TasksProps) {
   } = useTasks(data);
 
   // Date navigation
-  const browserTz = typeof window !== "undefined"
-    ? Intl.DateTimeFormat().resolvedOptions().timeZone
-    : "UTC";
-
-  const todayDate = new Date().toLocaleDateString("en-CA", { timeZone: browserTz });
-
-  const [selectedDate, setSelectedDate] = useState(todayDate);
+  const [selectedDate, setSelectedDate] = useState("");
+  const [todayDate, setTodayDate] = useState("");
   const [dateLoading, setDateLoading] = useState(false);
 
+  useEffect(() => {
+    const browserTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const today = new Date().toLocaleDateString("en-CA", { timeZone: browserTz });
+    setTodayDate(today);
+    if (!selectedDate) setSelectedDate(today);
+  }, []);
+
   const formatDisplayDate = (dateStr: string) => {
+    if (!dateStr) return "";
     const [y, m, d] = dateStr.split("-").map(Number);
     const dt = new Date(y, m - 1, d);
     return dt.toLocaleDateString("es", {
@@ -89,6 +96,7 @@ export default function TasksUI({ data = [] }: TasksProps) {
   };
 
   const shiftDate = (dateStr: string, delta: number) => {
+    if (!dateStr) return "";
     const [y, m, d] = dateStr.split("-").map(Number);
     const dt = new Date(Date.UTC(y, m - 1, d, 12, 0, 0));
     dt.setUTCDate(dt.getUTCDate() + delta);
@@ -97,11 +105,12 @@ export default function TasksUI({ data = [] }: TasksProps) {
 
   const goNextDay = () => setSelectedDate((prev) => shiftDate(prev, 1));
   const goPrevDay = () => setSelectedDate((prev) => shiftDate(prev, -1));
-  const goToday = () => setSelectedDate(todayDate);
+  const goToday = () => { if (todayDate) setSelectedDate(todayDate); };
 
-  const isToday = selectedDate === todayDate;
+  const isToday = selectedDate && todayDate && selectedDate === todayDate;
 
   const fetchTasksForDate = useCallback(async (dateStr: string) => {
+    if (!dateStr) return;
     setDateLoading(true);
     try {
       const fetched = await getTasksByDate(dateStr);
@@ -114,7 +123,7 @@ export default function TasksUI({ data = [] }: TasksProps) {
   }, [replaceTasks]);
 
   useEffect(() => {
-    fetchTasksForDate(selectedDate);
+    if (selectedDate) fetchTasksForDate(selectedDate);
   }, [selectedDate, fetchTasksForDate]);
 
   const handleTimerEnd = useCallback((taskId: string) => {
@@ -217,7 +226,11 @@ export default function TasksUI({ data = [] }: TasksProps) {
   };
 
   const onAddTask = () => {
-    handleAddTask(newTask);
+    if (!newTask.title || newTask.title.trim() === "") {
+      alert("El título es obligatorio");
+      return;
+    }
+    handleAddTask(newTask, selectedDate);
     setNewTask({
       title: "",
       description: "",
@@ -262,6 +275,14 @@ export default function TasksUI({ data = [] }: TasksProps) {
     alert("Estado actual: " + result);
   };
 
+  // Sincroniza el total de minutos con Redux
+  useEffect(() => {
+    const total = tasks
+      .filter((t) => !t.completed && t.timerMinutes)
+      .reduce((sum, t) => sum + (t.timerMinutes ?? 0), 0);
+    dispatch(setTotalMinutes(total));
+  }, [tasks, dispatch]);
+
   // Cálculos
   const stats = calculateStats(tasks);
   const filteredTasks = filterTasks(tasks, filter);
@@ -299,7 +320,7 @@ export default function TasksUI({ data = [] }: TasksProps) {
                       {formatDisplayDate(selectedDate)}
                     </span>
                   )}
-                  {!isToday && (
+                  {!isToday && todayDate && (
                     <button
                       className="btn btn-outline btn-xs whitespace-nowrap"
                       onClick={goToday}

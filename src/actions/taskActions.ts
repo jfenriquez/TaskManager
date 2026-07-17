@@ -204,6 +204,7 @@ interface TaskInput {
   timerMinutes: number | null;
   priority: "LOW" | "MEDIUM" | "HIGH";
   categoryId?: string | null;
+  executionDate?: string | null;
 }
 
 export async function createTask(task: TaskInput) {
@@ -227,6 +228,9 @@ export async function createTask(task: TaskInput) {
         timerMinutes: task.timerMinutes ?? null,
         priority: task.priority,
         categoryId: task.categoryId ?? null,
+        ExecutionDate: task.executionDate
+          ? new Date(task.executionDate + "T00:00:00.000Z")
+          : null,
       },
     });
 

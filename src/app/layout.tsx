@@ -4,6 +4,7 @@ import "./globals.css";
 import Navbar from "@/src/components/nav/Navbar";
 import { ThemeProvider } from "@/src/context/ThemeProvider";
 import { ThemeSwitcher } from "@/src/components/ui/ThemeSwitcher";
+import { ReduxProvider } from "@/src/store/provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,11 +31,13 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <ThemeProvider>
-          <Navbar />
-          <ThemeSwitcher />
-          {children}
-        </ThemeProvider>
+        <ReduxProvider>
+          <ThemeProvider>
+            <Navbar />
+            <ThemeSwitcher />
+            {children}
+          </ThemeProvider>
+        </ReduxProvider>
       </body>
     </html>
   );

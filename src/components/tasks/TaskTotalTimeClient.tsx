@@ -11,8 +11,22 @@ import {
 } from "react-icons/fa";
 import { useUserTimezone } from "@/src/hooks/useUserTimezone";
 import TimezoneSelector from "../TimezoneSelector";
+import { useAppDispatch, useAppSelector } from "@/src/store/hooks";
+import { setTotalMinutes } from "@/src/store/taskTimeSlice";
 
-export default function TaskTotalClient({ minutes }: { minutes: number }) {
+export default function TaskTotalClient({ minutes: initialMinutes }: { minutes: number }) {
+  const dispatch = useAppDispatch();
+  const totalMinutes = useAppSelector((s) => s.taskTime.totalMinutes);
+
+  // Inicializa Redux con el valor del servidor
+  useEffect(() => {
+    if (initialMinutes > 0) {
+      dispatch(setTotalMinutes(initialMinutes));
+    }
+  }, [initialMinutes, dispatch]);
+
+  const minutes = totalMinutes > 0 ? totalMinutes : initialMinutes;
+
   const [now, setNow] = useState(new Date());
 
   useEffect(() => {

@@ -7,7 +7,7 @@ type Theme =
   | "dim" | "coffee" | "lemonade" | "wireframe" | "fantasy" | "pastel";
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>("light");
+  const [theme, setTheme] = useState<Theme>("dim");
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);

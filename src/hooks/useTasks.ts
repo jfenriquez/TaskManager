@@ -24,7 +24,7 @@ export function useTasks(initialData: Tasks[] = []) {
   const tasksRef = useRef(tasks);
   tasksRef.current = tasks;
 
-  const handleAddTask = useCallback(async (newTask: NewTaskForm) => {
+  const handleAddTask = useCallback(async (newTask: NewTaskForm, executionDate?: string | null) => {
     const tempId = `temp-${Date.now()}`;
     const optimisticTask: Task = {
       id: tempId,
@@ -50,6 +50,7 @@ export function useTasks(initialData: Tasks[] = []) {
           timerMinutes: optimisticTask.timerMinutes ?? null,
           priority: optimisticTask.priority ?? "MEDIUM",
           categoryId: optimisticTask.categoryId ?? null,
+          executionDate,
         });
         setTasks((prev) =>
           prev.map((t) => (t.id === tempId ? (created as Task) : t))
@@ -57,6 +58,9 @@ export function useTasks(initialData: Tasks[] = []) {
       } catch (err) {
         setTasks((prev) => prev.filter((t) => t.id !== tempId));
         console.error("Error creando tarea:", err);
+        const errorMessage =
+          err instanceof Error ? err.message : "Error desconocido";
+        alert("No se pudo crear la tarea: " + errorMessage);
       }
     });
   }, []);
