@@ -371,3 +371,15 @@ body {
     @apply bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700;
   }
 }
+
+[data-theme="dim"] .date-nav-text {
+  color: #fbbf24 !important;
+}
+
+[data-theme="luxury"] .date-nav-text {
+  color: #d4a373 !important;
+}
+
+[data-theme="coffee"] .date-nav-text {
+  color: #fef3c7 !important;
+}
