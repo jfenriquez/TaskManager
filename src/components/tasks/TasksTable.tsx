@@ -13,6 +13,8 @@ import {
 import { useState, useTransition, useRef, useEffect } from "react";
 import { format, parse } from "date-fns";
 import { es } from "date-fns/locale";
+import { useUserTimezone } from "@/src/hooks/useUserTimezone";
+import { formatDateInTimezone } from "@/src/utils/dateHelpers";
 import { ArrowUp, ArrowDown, Download, Upload } from "lucide-react";
 import * as XLSX from "xlsx";
 import { updateTask, deleteTaskXid, getCategories } from "@/src/actions/taskActions";
@@ -32,6 +34,8 @@ export default function TasksTable({
   const [sorting, setSorting] = useState<SortingState>([]);
   const [isPending, startTransition] = useTransition();
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const { timezone } = useUserTimezone();
 
   const [categories, setCategories] = useState<
     { id: string; name: string; color: string }[]
@@ -94,7 +98,12 @@ export default function TasksTable({
         Categoría: cat?.name ?? "",
         "Tiempo estimado": formatTime(row.original.timerMinutes),
         "Fecha de ejecución": row.original.ExecutionDate
-          ? format(new Date(row.original.ExecutionDate), "dd/MM/yyyy")
+          ? new Date(row.original.ExecutionDate).toLocaleDateString("es", {
+              timeZone: timezone,
+              day: "2-digit",
+              month: "2-digit",
+              year: "numeric",
+            })
           : "",
       };
     });
@@ -618,10 +627,14 @@ export default function TasksTable({
                       <span className="text-base-content/50">Ejecución:</span>
                       <span className="ml-2">
                         {task.ExecutionDate
-                          ? format(
-                              new Date(task.ExecutionDate),
-                              "dd MMM yyyy",
-                              { locale: es }
+                          ? new Date(task.ExecutionDate).toLocaleDateString(
+                              "es",
+                              {
+                                timeZone: timezone,
+                                day: "2-digit",
+                                month: "short",
+                                year: "numeric",
+                              },
                             )
                           : "—"}
                       </span>

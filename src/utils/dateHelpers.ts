@@ -1,44 +1,74 @@
 // utils/dateHelpers.ts
 
-/**
- * Obtiene la zona horaria del navegador del usuario
- */
 export const getUserTimezone = (): string => {
   if (typeof window !== "undefined") {
     return Intl.DateTimeFormat().resolvedOptions().timeZone;
   }
-  return "UTC-5";
+  return "America/Bogota";
 };
 
-/**
- * Obtiene el inicio del día en la zona horaria especificada
- */
-export const getStartOfDay = (timezone: string = "UTC-5"): Date => {
+function getUTCOffsetMs(dateStr: string, timezone: string): number {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const utcMidnight = new Date(Date.UTC(y, m - 1, d, 0, 0, 0));
+
+  const formatter = new Intl.DateTimeFormat("en-CA", {
+    timeZone: timezone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  });
+
+  const formatted = formatter.format(utcMidnight);
+  const [datePart, timePart] = formatted.split(" ");
+  const [fy, fm, fd] = datePart.split("-").map(Number);
+  const [fh, fmin, fs] = timePart.split(":").map(Number);
+
+  const localAsUTC = Date.UTC(fy, fm - 1, fd, fh, fmin, fs);
+  return utcMidnight.getTime() - localAsUTC;
+}
+
+export function getDateRangeForTimezone(
+  dateStr: string,
+  timezone: string,
+): { start: Date; end: Date } {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const utcMidnight = new Date(Date.UTC(y, m - 1, d, 0, 0, 0));
+  const offsetMs = getUTCOffsetMs(dateStr, timezone);
+
+  const start = new Date(utcMidnight.getTime() + offsetMs);
+  const end = new Date(start.getTime() + 24 * 60 * 60 * 1000 - 1);
+
+  return { start, end };
+}
+
+export function dateStrToUTCMidnight(dateStr: string, timezone: string): Date {
+  const { start } = getDateRangeForTimezone(dateStr, timezone);
+  return start;
+}
+
+export const getStartOfDay = (timezone: string = "UTC"): Date => {
   const today = new Date().toLocaleDateString("en-CA", { timeZone: timezone });
-  return new Date(`${today}T00:00:00`);
+  const { start } = getDateRangeForTimezone(today, timezone);
+  return start;
 };
 
-/**
- * Obtiene el fin del día en la zona horaria especificada
- */
-export const getEndOfDay = (timezone: string = "UTC-5"): Date => {
+export const getEndOfDay = (timezone: string = "UTC"): Date => {
   const today = new Date().toLocaleDateString("en-CA", { timeZone: timezone });
-  return new Date(`${today}T23:59:59.999`);
+  const { end } = getDateRangeForTimezone(today, timezone);
+  return end;
 };
 
-/**
- * Convierte una fecha a string en formato YYYY-MM-DD en la zona horaria especificada
- */
 export const formatDateInTimezone = (
   date: Date,
-  timezone: string = "UTC-5"
+  timezone: string = "UTC",
 ): string => {
   return date.toLocaleDateString("en-CA", { timeZone: timezone });
 };
 
-/**
- * Lista de zonas horarias comunes (opcional, para un selector en el frontend)
- */
 export const commonTimezones = [
   { label: "Colombia (Bogotá)", value: "America/Bogota" },
   {

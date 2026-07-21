@@ -6,7 +6,12 @@ import type { UserWithRole } from "@/src/types/auth";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { auth } from "@/src/lib/auth";
-import { getStartOfDay, getEndOfDay } from "@/src/utils/dateHelpers";
+import {
+  getStartOfDay,
+  getEndOfDay,
+  getDateRangeForTimezone,
+  dateStrToUTCMidnight,
+} from "@/src/utils/dateHelpers";
 import { updateStreakOnTaskToggle } from "@/src/actions/streakActions";
 export interface Itask {
   task: {
@@ -96,8 +101,16 @@ export const getTasksByDate = async (dateStr: string) => {
       throw new Error("No autenticado");
     }
 
-    const startOfDay = new Date(`${dateStr}T00:00:00.000Z`);
-    const endOfDay = new Date(`${dateStr}T23:59:59.999Z`);
+    const user = await prisma.user.findUnique({
+      where: { id: userId.toString() },
+      select: { timezone: true },
+    });
+
+    const userTimezone = user?.timezone || "UTC";
+    const { start: startOfDay, end: endOfDay } = getDateRangeForTimezone(
+      dateStr,
+      userTimezone,
+    );
 
     const tasksForDate = await prisma.tasks.findMany({
       where: {
@@ -218,9 +231,15 @@ export async function createTask(task: TaskInput) {
   }
 
   try {
+    const user = await prisma.user.findUnique({
+      where: { id: userId.toString() },
+      select: { timezone: true },
+    });
+    const userTimezone = user?.timezone || "UTC";
+
     const newTask = await prisma.tasks.create({
       data: {
-        userId: userId.toString(), // Reemplaza con el ID del usuario correspondiente
+        userId: userId.toString(),
         title: task.title,
         description: task.description ?? null,
         completed: task.completed ?? false,
@@ -229,7 +248,7 @@ export async function createTask(task: TaskInput) {
         priority: task.priority,
         categoryId: task.categoryId ?? null,
         ExecutionDate: task.executionDate
-          ? new Date(task.executionDate + "T00:00:00.000Z")
+          ? dateStrToUTCMidnight(task.executionDate, userTimezone)
           : null,
       },
     });
