@@ -11,7 +11,7 @@ function getUTCOffsetMs(dateStr: string, timezone: string): number {
   const [y, m, d] = dateStr.split("-").map(Number);
   const utcMidnight = new Date(Date.UTC(y, m - 1, d, 0, 0, 0));
 
-  const formatter = new Intl.DateTimeFormat("en-CA", {
+  const parts = new Intl.DateTimeFormat("en-CA", {
     timeZone: timezone,
     year: "numeric",
     month: "2-digit",
@@ -20,12 +20,19 @@ function getUTCOffsetMs(dateStr: string, timezone: string): number {
     minute: "2-digit",
     second: "2-digit",
     hour12: false,
-  });
+  }).formatToParts(utcMidnight);
 
-  const formatted = formatter.format(utcMidnight);
-  const [datePart, timePart] = formatted.split(" ");
-  const [fy, fm, fd] = datePart.split("-").map(Number);
-  const [fh, fmin, fs] = timePart.split(":").map(Number);
+  const getValue = (type: string): number => {
+    const part = parts.find((p) => p.type === type);
+    return part ? parseInt(part.value, 10) : 0;
+  };
+
+  const fy = getValue("year");
+  const fm = getValue("month");
+  const fd = getValue("day");
+  const fh = getValue("hour");
+  const fmin = getValue("minute");
+  const fs = getValue("second");
 
   const localAsUTC = Date.UTC(fy, fm - 1, fd, fh, fmin, fs);
   return utcMidnight.getTime() - localAsUTC;
