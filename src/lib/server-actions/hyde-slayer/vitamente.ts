@@ -9,6 +9,7 @@ import {
 } from "@/src/lib/validations/hyde-slayer";
 import {
   requirePlayerProfile,
+  requireAdmin,
   ok,
   fail,
   handleActionError,
@@ -42,6 +43,7 @@ export async function createVitamente(input: unknown): Promise<
   ActionResult<{ id: string; title: string; content: string }>
 > {
   try {
+    await requireAdmin();
     const data = createVitamenteSchema.parse(input);
     const vitamente = await prisma.vitamente.create({ data });
     revalidatePath("/hyde-slayer");
@@ -53,6 +55,7 @@ export async function createVitamente(input: unknown): Promise<
 
 export async function updateVitamente(input: unknown): Promise<ActionResult<{ id: string }>> {
   try {
+    await requireAdmin();
     const data = updateVitamenteSchema.parse(input);
     await prisma.vitamente.update({ where: { id: data.id }, data });
     revalidatePath("/hyde-slayer");

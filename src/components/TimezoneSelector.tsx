@@ -59,7 +59,7 @@ export default function TimezoneSelector({
       <div className="flex items-center justify-between">
         <label
           htmlFor="timezone"
-          className="block text-sm font-medium text-gray-700"
+          className="block text-sm font-medium text-base-content/80"
         >
           Zona Horaria
         </label>
@@ -67,7 +67,7 @@ export default function TimezoneSelector({
           <button
             type="button"
             onClick={handleAutoDetect}
-            className="text-xs text-blue-600 hover:text-blue-700 underline"
+            className="text-xs text-primary hover:text-primary-focus underline"
           >
             Auto-detectar
           </button>
@@ -78,7 +78,7 @@ export default function TimezoneSelector({
         id="timezone"
         value={selectedTimezone}
         onChange={handleChange}
-        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+        className="w-full px-3 py-2 border border-base-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary bg-base-100"
       >
         {commonTimezones.map((tz) => (
           <option key={tz.value} value={tz.value}>
@@ -88,12 +88,12 @@ export default function TimezoneSelector({
       </select>
 
       {showDetected && detectedTimezone && (
-        <p className="text-xs text-gray-500 mt-1">
+        <p className="text-xs text-base-content/50 mt-1">
           🌍 Detectado: <span className="font-medium">{detectedTimezone}</span>
         </p>
       )}
 
-      <p className="text-xs text-gray-500">
+      <p className="text-xs text-base-content/50">
         Hora actual:{" "}
         {mounted
           ? new Date().toLocaleString("es-ES", {

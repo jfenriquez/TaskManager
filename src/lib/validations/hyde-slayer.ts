@@ -37,14 +37,6 @@ export const updatePlayerProfileSchema = z.object({
 
 export type UpdatePlayerProfileInput = z.infer<typeof updatePlayerProfileSchema>;
 
-export const addXpSchema = z.object({
-  amount: z.number().int().positive("La cantidad debe ser positiva"),
-  source: z.string().min(1).max(100),
-  description: z.string().max(500).nullish(),
-});
-
-export type AddXpInput = z.infer<typeof addXpSchema>;
-
 // ═══════════════════════════════════════════════════════════════
 // VITAMENTES (Affirmations)
 // ═══════════════════════════════════════════════════════════════
@@ -109,12 +101,11 @@ export const updateHydeEnemySchema = createHydeEnemySchema.partial().extend({ id
 
 /**
  * Simulates a battle between player and enemy.
- * Damage formula: max(0, attack - defense) + random(0, 5)
+ * Las stats de ataque/defensa se calculan en el servidor (nivel + items
+ * equipados); el cliente solo indica el enemigo.
  */
 export const simulateBattleSchema = z.object({
   enemyId: id,
-  playerAttack: z.number().int().nonnegative(),
-  playerDefense: z.number().int().nonnegative(),
 });
 
 export type CreateHydeEnemyInput = z.infer<typeof createHydeEnemySchema>;
@@ -212,7 +203,10 @@ export const acceptPactSchema = z.object({
 
 export const updatePactProgressSchema = z.object({
   pactId: id,
-  progress: z.number().int().min(0).max(100),
+  // Cuánto se avanzó en esta llamada (delta). El servidor nunca acepta fijar
+  // el progreso absoluto: máximo +5 por llamada para evitar completar pactos
+  // de alto valor en una sola request.
+  progress: z.number().int().min(1).max(5, "Máximo +5% de avance por actualización"),
 });
 
 export const deletePactSchema = z.object({

@@ -4,7 +4,6 @@ import { prisma } from "@/src/lib/prisma";
 import {
   requirePlayerProfile,
   ok,
-  fail,
   handleActionError,
   type ActionResult,
 } from "../utils";

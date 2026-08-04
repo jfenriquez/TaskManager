@@ -2,16 +2,13 @@
 
 import { prisma } from "@/src/lib/prisma";
 import { revalidatePath } from "next/cache";
-import { updatePlayerProfileSchema, addXpSchema } from "@/src/lib/validations/hyde-slayer";
+import { updatePlayerProfileSchema } from "@/src/lib/validations/hyde-slayer";
 import {
   requirePlayerProfile,
   requireUserId,
   ok,
   fail,
   handleActionError,
-  awardXp,
-  awardCoins,
-  awardDiscipline,
   type ActionResult,
 } from "./utils";
 
@@ -66,26 +63,6 @@ export async function updatePlayerProfile(
 
     revalidatePath("/hyde-slayer");
     return ok({ playerName: updated.playerName });
-  } catch (err) {
-    return handleActionError(err);
-  }
-}
-
-export async function addXp(
-  input: unknown,
-): Promise<ActionResult<{ xp: number; level: number }>> {
-  try {
-    const { playerId } = await requirePlayerProfile();
-    const data = addXpSchema.parse(input);
-
-    await awardXp(playerId, data.amount, data.source, data.description);
-
-    const profile = await prisma.playerProfile.findUnique({
-      where: { id: playerId },
-      select: { xp: true, level: true },
-    });
-
-    return ok({ xp: profile!.xp, level: profile!.level });
   } catch (err) {
     return handleActionError(err);
   }

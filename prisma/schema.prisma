@@ -85,6 +85,7 @@ model User {
   categories    Category[]
   accounts      Account[]
   sessions      Session[]
+  apiKeys       ApiKey[]
   role          Role      @default(USER)
   streak        Int       @default(0)
   timezone      String    @default("UTC")
@@ -146,6 +147,25 @@ model Jwks {
   createdAt  DateTime
 
   @@map("jwks")
+}
+
+// ═══════════════════════════════════════════════════════════════
+// API KEYS — MCP authentication
+// ═══════════════════════════════════════════════════════════════
+
+model ApiKey {
+  id          String    @id @default(cuid())
+  name        String
+  keyPrefix   String
+  keyHash     String
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+  lastUsedAt  DateTime?
+
+  @@unique([keyPrefix, userId])
+  @@index([userId])
+  @@map("api_key")
 }
 
 // ═══════════════════════════════════════════════════════════════

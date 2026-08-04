@@ -9,6 +9,7 @@ import {
 } from "@/src/lib/validations/hyde-slayer";
 import {
   requirePlayerProfile,
+  requireAdmin,
   ok,
   handleActionError,
   awardXp,
@@ -41,6 +42,7 @@ export async function createExercise(input: unknown): Promise<
   ActionResult<{ id: string; name: string }>
 > {
   try {
+    await requireAdmin();
     const data = createRelaxationExerciseSchema.parse(input);
     const exercise = await prisma.relaxationExercise.create({ data });
     revalidatePath("/hyde-slayer");
@@ -52,6 +54,7 @@ export async function createExercise(input: unknown): Promise<
 
 export async function updateExercise(input: unknown): Promise<ActionResult<{ id: string }>> {
   try {
+    await requireAdmin();
     const data = updateRelaxationExerciseSchema.parse(input);
     await prisma.relaxationExercise.update({ where: { id: data.id }, data });
     revalidatePath("/hyde-slayer");

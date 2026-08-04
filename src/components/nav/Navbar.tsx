@@ -7,7 +7,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 export default function Navbar() {
-  const { data: session, isPending, error } = authClient.useSession();
+  const { data: session, isPending } = authClient.useSession();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [logoutError, setLogoutError] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
@@ -65,11 +65,7 @@ export default function Navbar() {
     }
   };
 
-  useEffect(() => {
-    if (error) {
-      console.error("Error de sesión:", error);
-    }
-  }, [error]);
+  // Session error handling is managed by better-auth internally
 
   return (
     <div
@@ -242,7 +238,7 @@ export default function Navbar() {
           <div className="flex gap-2 items-center">
             <Link
               href="/login"
-              className="btn btn-ghost btn-sm sm:btn-md text-base-content/70"
+              className="btn btn-ghost btn-sm sm:btn-md text-base-content/90"
             >
               Iniciar Sesión
             </Link>

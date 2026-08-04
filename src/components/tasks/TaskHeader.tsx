@@ -29,7 +29,7 @@ export default function TaskHeader({
           <h1 className="text-4xl md:text-5xl font-extrabold text-primary mb-2">
             Gestor de Tareas
           </h1>
-          <p className="text-base-content/70">
+          <p className="text-base-content/90">
             Organiza tu día de manera efectiva{userName ? `, ${userName}` : ""}
           </p>
           <button

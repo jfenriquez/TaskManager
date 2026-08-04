@@ -9,6 +9,7 @@ import {
 } from "@/src/lib/validations/hyde-slayer";
 import {
   requirePlayerProfile,
+  requireAdmin,
   ok,
   fail,
   handleActionError,
@@ -70,6 +71,7 @@ export async function getEnemyById(id: string): Promise<
 
 export async function createEnemy(input: unknown): Promise<ActionResult<{ id: string; name: string }>> {
   try {
+    await requireAdmin();
     const data = createHydeEnemySchema.parse(input);
     const enemy = await prisma.hydeEnemy.create({ data });
     revalidatePath("/hyde-slayer");
@@ -81,6 +83,7 @@ export async function createEnemy(input: unknown): Promise<ActionResult<{ id: st
 
 export async function updateEnemy(input: unknown): Promise<ActionResult<{ id: string }>> {
   try {
+    await requireAdmin();
     const data = updateHydeEnemySchema.parse(input);
     await prisma.hydeEnemy.update({ where: { id: data.id }, data });
     revalidatePath("/hyde-slayer");
@@ -88,6 +91,29 @@ export async function updateEnemy(input: unknown): Promise<ActionResult<{ id: st
   } catch (err) {
     return handleActionError(err);
   }
+}
+
+async function getPlayerBattleStats(playerId: string): Promise<{ attack: number; defense: number }> {
+  const profile = await prisma.playerProfile.findUnique({
+    where: { id: playerId },
+    select: { level: true },
+  });
+  const level = profile?.level ?? 1;
+
+  let attack = 10 + level * 3;
+  let defense = 5 + level * 2;
+
+  const equipped = await prisma.inventory.findMany({
+    where: { playerId, equipped: true },
+    include: { item: { select: { effect: true } } },
+  });
+  for (const inv of equipped) {
+    const effect = inv.item.effect as Record<string, unknown> | null;
+    if (typeof effect?.attack === "number") attack += effect.attack;
+    if (typeof effect?.defense === "number") defense += effect.defense;
+  }
+
+  return { attack, defense };
 }
 
 export async function simulateBattle(input: unknown): Promise<
@@ -108,21 +134,30 @@ export async function simulateBattle(input: unknown): Promise<
     const enemy = await prisma.hydeEnemy.findUnique({ where: { id: data.enemyId } });
     if (!enemy) return fail("Enemigo no encontrado");
 
+    // Stats autoritativas calculadas en el servidor (nivel + items equipados).
+    // Nunca se confía en valores de ataque/defensa enviados por el cliente.
+    const { attack: playerAttack, defense: playerDefense } = await getPlayerBattleStats(playerId);
+
     const log: string[] = [];
-    let playerHp = 100 + data.playerDefense * 2;
+    let playerHp = 100 + playerDefense * 2;
     let enemyHp = enemy.hp;
     let turns = 0;
+    let damageDealt = 0;
+    let damageTaken = 0;
+    const MAX_TURNS = 1000;
 
-    while (playerHp > 0 && enemyHp > 0) {
+    while (playerHp > 0 && enemyHp > 0 && turns < MAX_TURNS) {
       turns++;
-      const playerDmg = Math.max(1, data.playerAttack - enemy.defense + Math.floor(Math.random() * 5));
+      const playerDmg = Math.max(1, playerAttack - enemy.defense + Math.floor(Math.random() * 5));
       enemyHp -= playerDmg;
+      damageDealt += playerDmg;
       log.push(`Turno ${turns}: Atacas por ${playerDmg} (enemigo: ${Math.max(0, enemyHp)} HP)`);
 
       if (enemyHp <= 0) break;
 
-      const enemyDmg = Math.max(1, enemy.attack - data.playerDefense + Math.floor(Math.random() * 3));
+      const enemyDmg = Math.max(1, enemy.attack - playerDefense + Math.floor(Math.random() * 3));
       playerHp -= enemyDmg;
+      damageTaken += enemyDmg;
       log.push(`Turno ${turns}: Hyde ataca por ${enemyDmg} (tú: ${Math.max(0, playerHp)} HP)`);
     }
 
@@ -133,8 +168,8 @@ export async function simulateBattle(input: unknown): Promise<
         playerId,
         enemyId: data.enemyId,
         result: isVictory ? "VICTORY" : "DEFEAT",
-        damageDealt: data.playerAttack * turns,
-        damageTaken: enemy.attack * turns,
+        damageDealt,
+        damageTaken,
         xpEarned: isVictory ? enemy.xpReward : Math.floor(enemy.xpReward / 4),
         coinsEarned: isVictory ? enemy.coinReward : 0,
         duration: turns * 3,

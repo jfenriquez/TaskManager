@@ -11,19 +11,19 @@ export const getUserTimezone = (): string => {
 };
 
 /**
- * Obtiene el inicio del día en la zona horaria especificada
+ * Obtiene el inicio del día actual en la zona horaria especificada
  */
 export const getStartOfDay = (timezone: string = "UTC-5"): Date => {
   const today = new Date().toLocaleDateString("en-CA", { timeZone: timezone });
-  return new Date(`${today}T00:00:00`);
+  return getDateRangeUtc(today, timezone).start;
 };
 
 /**
- * Obtiene el fin del día en la zona horaria especificada
+ * Obtiene el fin del día actual en la zona horaria especificada
  */
 export const getEndOfDay = (timezone: string = "UTC-5"): Date => {
   const today = new Date().toLocaleDateString("en-CA", { timeZone: timezone });
-  return new Date(`${today}T23:59:59.999`);
+  return getDateRangeUtc(today, timezone).end;
 };
 
 /**
@@ -35,6 +35,34 @@ export const formatDateInTimezone = (
 ): string => {
   return date.toLocaleDateString("en-CA", { timeZone: timezone });
 };
+
+/**
+ * Dado un string YYYY-MM-DD y una zona horaria, devuelve un Date UTC
+ * que cae a las 12:00 (mediodía) de ese día local.
+ * Así se evita el desfase de medianoche UTC en husos negativos.
+ */
+export function normalizeDateUtc(dateStr: string, timezone: string): Date {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const noon = new Date(Date.UTC(y, m - 1, d, 12, 0, 0));
+  if (noon.toLocaleDateString("en-CA", { timeZone: timezone }) !== dateStr) {
+    noon.setUTCDate(noon.getUTCDate() - 1);
+  }
+  return noon;
+}
+
+/**
+ * Retorna el rango [start, end) UTC que cubre el día local completo
+ * para la fecha y timezone dadas.
+ */
+export function getDateRangeUtc(dateStr: string, timezone: string) {
+  const ref = normalizeDateUtc(dateStr, timezone);
+  return {
+    start: new Date(ref.getTime() - 12 * 60 * 60 * 1000),
+    end: new Date(ref.getTime() + 12 * 60 * 60 * 1000),
+  };
+}
+
+
 
 /**
  * Lista de zonas horarias comunes (opcional, para un selector en el frontend)

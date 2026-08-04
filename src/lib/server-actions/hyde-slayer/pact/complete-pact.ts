@@ -7,11 +7,7 @@ import {
   requirePlayerProfile,
   ActionError,
   ok,
-  fail,
   handleActionError,
-  awardXp,
-  awardCoins,
-  awardDiscipline,
   type ActionResult,
 } from "../utils";
 import { checkAndUnlockAchievements } from "../achievement";
@@ -47,6 +43,9 @@ export async function completePact(input: unknown): Promise<
       if (!playerPact) throw new ActionError("Pacto no encontrado");
       if (playerPact.status === "COMPLETED") throw new ActionError("Este pacto ya fue completado");
       if (playerPact.status === "CANCELLED") throw new ActionError("Este pacto fue cancelado");
+      if (playerPact.progress < 100) {
+        throw new ActionError("Debes completar el 100% del progreso del pacto para completarlo");
+      }
 
       const pact = playerPact.pact;
       const elapsedDays = Math.floor(
@@ -103,15 +102,6 @@ export async function completePact(input: unknown): Promise<
         update: { xpEarned: { increment: xp } },
       });
 
-      const pactCount = await tx.playerPact.count({
-        where: { playerId, status: "COMPLETED" },
-      });
-
-      await tx.user.update({
-        where: { id: userId },
-        data: { streak: { increment: 1 } },
-      });
-
       const profile = await tx.playerProfile.findUnique({ where: { id: playerId } });
       const xpPerLevel = 200;
       const newLevel = Math.floor((profile!.xp) / xpPerLevel) + 1;
@@ -122,7 +112,7 @@ export async function completePact(input: unknown): Promise<
         });
       }
 
-      return { xp, coins, discipline, xpBonus, streakBonus, pactCount: pactCount + 1, pactTitle: pact.title };
+      return { xp, coins, discipline, xpBonus, streakBonus, pactTitle: pact.title };
     });
 
     const achievementResult = await checkAndUnlockAchievements();

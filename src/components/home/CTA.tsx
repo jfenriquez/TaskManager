@@ -71,7 +71,7 @@ export default function CTA() {
                   className="text-3xl md:text-5xl font-extrabold text-base-content leading-tight"
                 >
                   Empieza a organizar tus días{" "}
-                  <span className="text-primary drop-shadow-lg bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                  <span className="text-primary drop-shadow-lg bg-gradient-to-r from-primary to-base-content bg-clip-text text-transparent">
                     hoy mismo
                   </span>
                 </motion.h3>
@@ -82,7 +82,7 @@ export default function CTA() {
                   whileInView={{ opacity: 1 }}
                   transition={{ delay: 0.4 }}
                   viewport={{ once: true }}
-                  className="text-base-content/70 text-lg md:text-xl max-w-2xl mx-auto leading-relaxed"
+                  className="text-base-content/90 text-lg md:text-xl max-w-2xl mx-auto leading-relaxed"
                 >
                   Prueba TaskFlow gratis. Sin tarjeta de crédito. Sin
                   compromisos.
@@ -178,7 +178,7 @@ export default function CTA() {
                   className="pt-8"
                 >
                   <div className="divider">
-                    <span className="text-xs text-base-content/50 font-medium uppercase tracking-wider">
+                    <span className="text-xs text-base-content/70 font-medium uppercase tracking-wider">
                       Únete a miles de usuarios organizados
                     </span>
                   </div>
@@ -215,7 +215,7 @@ export default function CTA() {
                   viewport={{ once: true }}
                   className="flex justify-center items-center gap-6 pt-6 flex-wrap"
                 >
-                  <div className="flex items-center gap-2 text-base-content/60">
+                  <div className="flex items-center gap-2 text-base-content/80">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       className="h-5 w-5 text-success"
@@ -232,7 +232,7 @@ export default function CTA() {
                     </svg>
                     <span className="text-xs font-medium">SSL Seguro</span>
                   </div>
-                  <div className="flex items-center gap-2 text-base-content/60">
+                  <div className="flex items-center gap-2 text-base-content/80">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       className="h-5 w-5 text-info"
@@ -251,7 +251,7 @@ export default function CTA() {
                       Datos protegidos
                     </span>
                   </div>
-                  <div className="flex items-center gap-2 text-base-content/60">
+                  <div className="flex items-center gap-2 text-base-content/80">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       className="h-5 w-5 text-warning"

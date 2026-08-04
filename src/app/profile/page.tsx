@@ -6,7 +6,7 @@ import { getProfileStats } from "@/src/actions/taskActions";
 import { useUserTimezone } from "@/src/hooks/useUserTimezone";
 import StreakDisplay from "@/src/components/streak/StreakDisplay";
 import Link from "next/link";
-import { Swords } from "lucide-react";
+import { Swords, Key, Trash2, Copy, Check } from "lucide-react";
 import {
   Chart as ChartJS,
   ArcElement,
@@ -206,6 +206,181 @@ function BarChartComponent({
         },
       }}
     />
+  );
+}
+
+interface ApiKeyItem {
+  id: string;
+  name: string;
+  keyPrefix: string;
+  createdAt: string;
+  lastUsedAt: string | null;
+}
+
+interface ApiKeyCreated extends ApiKeyItem {
+  key: string;
+}
+
+function ApiKeyManager() {
+  const [keys, setKeys] = useState<ApiKeyItem[]>([]);
+  const [newKey, setNewKey] = useState<ApiKeyCreated | null>(null);
+  const [name, setName] = useState("");
+  const [creating, setCreating] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const loadKeys = () => {
+    fetch("/api/keys")
+      .then((r) => r.json())
+      .then(setKeys)
+      .catch(() => {});
+  };
+
+  useEffect(loadKeys, []);
+
+  const createKey = async () => {
+    if (!name.trim()) return;
+    setCreating(true);
+    try {
+      const res = await fetch("/api/keys", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: name.trim() }),
+      });
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      setNewKey(data);
+      setName("");
+      loadKeys();
+    } catch {
+      /* ignore */
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const deleteKey = async (id: string) => {
+    await fetch("/api/keys", {
+        method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    });
+    loadKeys();
+  };
+
+  const copyKey = () => {
+    if (!newKey) return;
+    navigator.clipboard.writeText(newKey.key).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 3000);
+    });
+  };
+
+  return (
+    <div className="card bg-base-100 shadow-xl border border-base-300 p-6">
+      <h2 className="font-semibold text-lg mb-1 flex items-center gap-2">
+        <Key className="w-5 h-5" /> API Keys
+      </h2>
+      <p className="text-sm text-base-content/50 mb-4">
+        Claves para conectar herramientas externas (MCP, CLI, etc.)
+      </p>
+
+      {newKey && (
+        <div className="alert alert-success mb-4 shadow-lg">
+          <div className="w-full">
+            <span className="font-bold">¡Clave creada!</span>
+            <p className="text-xs mt-1">
+              Cópiala ahora, no podrás verla de nuevo.
+            </p>
+            <div className="flex items-center gap-2 mt-2">
+              <code className="bg-base-300 px-3 py-2 rounded-lg text-xs break-all flex-1 font-mono select-all">
+                {newKey.key}
+              </code>
+              <button
+                className="btn btn-sm btn-ghost"
+                onClick={copyKey}
+                title="Copiar"
+              >
+                {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+              </button>
+            </div>
+            <button
+              className="btn btn-sm btn-ghost mt-2"
+              onClick={() => { setNewKey(null); setCopied(false); }}
+            >
+              Cerrar
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div className="flex gap-2 mb-4">
+        <input
+          type="text"
+          className="input input-bordered input-sm flex-1 bg-base-200"
+          placeholder="Nombre de la clave (ej: Claude Desktop)"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && createKey()}
+        />
+        <button
+          className="btn btn-primary btn-sm"
+          onClick={createKey}
+          disabled={creating || !name.trim()}
+        >
+          {creating ? (
+            <span className="loading loading-spinner loading-xs" />
+          ) : (
+            "Generar"
+          )}
+        </button>
+      </div>
+
+      {keys.length === 0 ? (
+        <p className="text-sm text-base-content/40 text-center py-4">
+          No tienes API keys. Genera una para conectar el MCP server.
+        </p>
+      ) : (
+        <div className="space-y-2">
+          {keys.map((k) => (
+            <div
+              key={k.id}
+              className="flex items-center justify-between p-3 rounded-xl bg-base-200"
+            >
+              <div className="min-w-0 flex-1">
+                <p className="font-medium truncate">{k.name}</p>
+                <p className="text-xs text-base-content/50">
+                  <code className="font-mono">{k.keyPrefix}...</code>
+                  <span className="mx-2">·</span>
+                  Creada: {new Date(k.createdAt).toLocaleDateString()}
+                  {k.lastUsedAt && (
+                    <>
+                      <span className="mx-2">·</span>
+                      Último uso: {new Date(k.lastUsedAt).toLocaleDateString()}
+                    </>
+                  )}
+                </p>
+              </div>
+              <button
+                className="btn btn-ghost btn-sm btn-square text-error"
+                onClick={() => deleteKey(k.id)}
+                title="Eliminar"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="mt-4 p-3 bg-base-200 rounded-xl">
+        <p className="text-xs text-base-content/50">
+          <strong>Uso en MCP:</strong>
+        </p>
+        <pre className="text-xs mt-1 bg-base-300 p-2 rounded-lg overflow-x-auto">{`"env": {
+  "MCP_API_KEY": "sk_..."
+}`}</pre>
+      </div>
+    </div>
   );
 }
 
@@ -499,6 +674,9 @@ export default function ProfilePage() {
                 <span>Más</span>
               </div>
             </div>
+
+            {/* API Keys */}
+            <ApiKeyManager />
           </>
         ) : null}
       </div>

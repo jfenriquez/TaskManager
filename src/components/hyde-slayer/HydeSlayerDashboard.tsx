@@ -18,7 +18,11 @@ import { usePlayerStats } from "@/src/context/PlayerStatsContext";
 
 export default function HydeSlayerDashboard() {
   const { stats, loading, refresh } = usePlayerStats();
-  const [activeModule, setActiveModule] = useState<ModuleKey>("dashboard");
+  const [activeModule, setActiveModule] = useState<ModuleKey>(() => {
+    if (typeof window === "undefined") return "dashboard";
+    const mod = new URLSearchParams(window.location.search).get("module");
+    return mod ? (mod as ModuleKey) : "dashboard";
+  });
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const renderModule = () => {

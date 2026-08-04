@@ -11,6 +11,7 @@ import {
 } from "@/src/lib/validations/hyde-slayer";
 import {
   requirePlayerProfile,
+  requireAdmin,
   ok,
   fail,
   handleActionError,
@@ -44,6 +45,7 @@ export async function getItems(): Promise<
 
 export async function createItem(input: unknown): Promise<ActionResult<{ id: string; name: string }>> {
   try {
+    await requireAdmin();
     const data = createItemSchema.parse(input);
     const item = await prisma.item.create({ data: data as Prisma.ItemCreateInput });
     revalidatePath("/hyde-slayer");
@@ -55,6 +57,7 @@ export async function createItem(input: unknown): Promise<ActionResult<{ id: str
 
 export async function updateItem(input: unknown): Promise<ActionResult<{ id: string }>> {
   try {
+    await requireAdmin();
     const data = updateItemSchema.parse(input);
     await prisma.item.update({ where: { id: data.id }, data: data as Prisma.ItemUpdateInput });
     revalidatePath("/hyde-slayer");

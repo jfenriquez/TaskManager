@@ -32,7 +32,7 @@ export default function TaskList({
   if (tasks.length === 0) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-400 dark:text-gray-500 text-lg transition-colors duration-200">
+        <p className="text-base-content/70 text-lg transition-colors duration-200">
           No hay tareas para mostrar
         </p>
       </div>

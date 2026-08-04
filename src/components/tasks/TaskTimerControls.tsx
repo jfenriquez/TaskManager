@@ -51,11 +51,11 @@ export default function TaskTimerControls({
         >
           <FaClock
             className={`w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0 ${
-              isFinished ? "text-base-content/40" : "text-primary"
+              isFinished ? "text-base-content/60" : "text-primary"
             }`}
           />
           <div className="flex flex-col leading-none min-w-0">
-            <span className="text-[10px] sm:text-xs text-base-content/60 truncate">
+            <span className="text-[10px] sm:text-xs text-base-content/80 truncate">
               Tiempo restante
             </span>
             <motion.span
@@ -64,7 +64,7 @@ export default function TaskTimerControls({
               animate={{ opacity: 1, y: 0 }}
               transition={{ type: "spring", stiffness: 300, damping: 20 }}
               className={`font-mono text-xs sm:text-sm font-semibold ${
-                isFinished ? "text-base-content/40" : "text-base-content"
+                isFinished ? "text-base-content/60" : "text-base-content"
               }`}
             >
               {timeText}

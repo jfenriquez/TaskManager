@@ -20,7 +20,7 @@ export default function AdminPage() {
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-4">No autenticado</h1>
           <p>Por favor inicia sesión para acceder a esta página</p>
-          <a href="/login" className="text-blue-500 underline mt-4 block">
+          <a href="/login" className="text-primary underline mt-4 block">
             Ir a login
           </a>
         </div>
@@ -34,7 +34,7 @@ export default function AdminPage() {
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-4">Acceso Denegado</h1>
           <p>No tienes permisos de administrador</p>
-          <p className="text-sm text-gray-600 mt-2">
+          <p className="text-sm text-base-content/60 mt-2">
             Tu rol actual: {user?.role}
           </p>
         </div>
@@ -45,7 +45,7 @@ export default function AdminPage() {
   return (
     <div className="container mx-auto p-8">
       <h1 className="text-3xl font-bold mb-6">Panel de Administrador</h1>
-      <div className="bg-white shadow rounded-lg p-6">
+      <div className="bg-base-100 shadow rounded-lg p-6 border border-base-300">
         <h2 className="text-xl font-semibold mb-4">Información del Usuario</h2>
         <div className="space-y-2">
           <p>
