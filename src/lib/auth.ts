@@ -6,11 +6,31 @@ import { sendEmail } from "@/src/lib/email";
 
 const appUrl = process.env.BETTER_AUTH_URL || "http://localhost:3000";
 
+const isProduction = process.env.NODE_ENV === "production";
+
+// En producción la URL de auth debe ser https: los enlaces de verificación/reset
+// y los cookies Secure dependen de ella (un fallback a localhost sería phishing).
+if (isProduction && !appUrl.startsWith("https://")) {
+  throw new Error("BETTER_AUTH_URL debe ser una URL https en producción");
+}
+
 export const auth = betterAuth({
   database: prismaAdapter(prisma, { provider: "postgresql" }),
 
   secret: process.env.BETTER_AUTH_SECRET!,
   url: appUrl,
+
+  trustedOrigins: process.env.TRUSTED_ORIGINS
+    ? process.env.TRUSTED_ORIGINS.split(",").map((o) => o.trim())
+    : undefined,
+
+  advanced: {
+    useSecureCookies: isProduction,
+    defaultCookieAttributes: {
+      httpOnly: true,
+      sameSite: "lax",
+    },
+  },
 
   emailAndPassword: {
     enabled: true,

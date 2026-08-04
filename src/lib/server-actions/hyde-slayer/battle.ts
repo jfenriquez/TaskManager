@@ -163,6 +163,19 @@ export async function simulateBattle(input: unknown): Promise<
 
     const isVictory = playerHp > 0;
 
+    // Anti-farmeo: solo las primeras 20 batallas del día otorgan recompensa.
+    // El resto se registran (progreso de jefes/logros) sin XP ni monedas.
+    const todayStart = new Date(new Date().setHours(0, 0, 0, 0));
+    const dailyLog = await prisma.dailyLog.upsert({
+      where: { playerId_date: { playerId, date: todayStart } },
+      create: { playerId, date: todayStart, battleCount: 0 },
+      update: {},
+    });
+    const MAX_DAILY_REWARDED_BATTLES = 20;
+    const rewarded = isVictory && dailyLog.battleCount < MAX_DAILY_REWARDED_BATTLES;
+    const xpEarned = rewarded ? enemy.xpReward : 0;
+    const coinsEarned = rewarded ? enemy.coinReward : 0;
+
     const battle = await prisma.battleLog.create({
       data: {
         playerId,
@@ -170,20 +183,25 @@ export async function simulateBattle(input: unknown): Promise<
         result: isVictory ? "VICTORY" : "DEFEAT",
         damageDealt,
         damageTaken,
-        xpEarned: isVictory ? enemy.xpReward : Math.floor(enemy.xpReward / 4),
-        coinsEarned: isVictory ? enemy.coinReward : 0,
+        xpEarned,
+        coinsEarned,
         duration: turns * 3,
       },
     });
 
     if (isVictory) {
+      await prisma.dailyLog.update({
+        where: { playerId_date: { playerId, date: todayStart } },
+        data: { battleCount: { increment: 1 } },
+      });
+    }
+
+    if (rewarded) {
       await awardXp(playerId, enemy.xpReward, "battle", `Derrotaste a ${enemy.name}`);
       await awardCoins(playerId, enemy.coinReward);
-      const todayStart = new Date(new Date().setHours(0, 0, 0, 0));
-      await prisma.dailyLog.upsert({
+      await prisma.dailyLog.update({
         where: { playerId_date: { playerId, date: todayStart } },
-        create: { playerId, date: todayStart, battleCount: 1, xpEarned: enemy.xpReward },
-        update: { battleCount: { increment: 1 }, xpEarned: { increment: enemy.xpReward } },
+        data: { xpEarned: { increment: enemy.xpReward } },
       });
     }
 
@@ -216,10 +234,12 @@ export async function getBattleHistory(limit = 20): Promise<
 > {
   try {
     const { playerId } = await requirePlayerProfile();
+    // Tope superior para evitar queries pesadas con valores arbitrarios.
+    const safeLimit = Math.max(1, Math.min(limit, 100));
     const logs = await prisma.battleLog.findMany({
       where: { playerId },
       orderBy: { createdAt: "desc" },
-      take: limit,
+      take: safeLimit,
       include: { enemy: { select: { name: true, level: true } } },
     });
     return ok(logs);

@@ -1,6 +1,19 @@
 import bcrypt from "bcryptjs";
 import { prisma } from "./prisma.js";
 
+/**
+ * MODO LOCAL (stdio) — Clausula para Claude Desktop/Cursor.
+ * Este transporte resuelve la identidad por env/primer usuario INTENCIONALMENTE,
+ * porque es un proceso local de confianza. NUNCA debe usarse como servicio:
+ * si se detecta NODE_ENV=production, se aborta para evitar que estos fallbacks
+ * queden expuestos como bypass de autenticación.
+ */
+if (process.env.NODE_ENV === "production") {
+  throw new Error(
+    "El servidor MCP stdio no debe ejecutarse en producción. Usa el endpoint HTTP /api/mcp con x-api-key."
+  );
+}
+
 let cachedUserId: string | null = null;
 
 /**
@@ -19,7 +32,7 @@ export async function getUserId(): Promise<string> {
   if (apiKey) {
     const keys = await prisma.apiKey.findMany({ select: { id: true, keyHash: true, userId: true } });
     for (const row of keys) {
-      if (bcrypt.compareSync(apiKey, row.keyHash)) {
+      if (await bcrypt.compare(apiKey, row.keyHash)) {
         cachedUserId = row.userId;
         prisma.apiKey.update({ where: { id: row.id }, data: { lastUsedAt: new Date() } }).catch(() => {});
         return cachedUserId;

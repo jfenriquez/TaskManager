@@ -66,7 +66,7 @@ export function registerTaskTools(server: McpServer, userId: string) {
         data.ExecutionDate = input.executionDate ? normalizeDateUtc(input.executionDate, tz) : null;
       }
 
-      const task = await prisma.tasks.update({ where: { id: input.id }, data });
+      const task = await prisma.tasks.update({ where: { id: input.id, userId }, data });
       return { content: [{ type: "text", text: JSON.stringify(task, null, 2) }] };
     }
   );
@@ -81,7 +81,8 @@ export function registerTaskTools(server: McpServer, userId: string) {
       const existing = await prisma.tasks.findFirst({ where: { id: input.id, userId } });
       if (!existing) throw new Error("Task not found");
 
-      await prisma.tasks.delete({ where: { id: input.id } });
+      const deleted = await prisma.tasks.deleteMany({ where: { id: input.id, userId } });
+      if (deleted.count === 0) throw new Error("Task not found");
       return { content: [{ type: "text", text: `Tarea "${existing.title}" eliminada` }] };
     }
   );
@@ -136,7 +137,7 @@ export function registerTaskTools(server: McpServer, userId: string) {
       if (!existing) throw new Error("Task not found");
 
       const task = await prisma.tasks.update({
-        where: { id: input.id },
+        where: { id: input.id, userId },
         data: { completed: input.completed },
       });
 

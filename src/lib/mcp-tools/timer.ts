@@ -32,7 +32,7 @@ export function registerTimerTools(server: McpServer, userId: string) {
       const endsAt = new Date(Date.now() + secondsToUse * 1000);
 
       const updated = await prisma.tasks.update({
-        where: { id: input.taskId },
+        where: { id: input.taskId, userId },
         data: { timerStartedAt: now, timerEndsAt: endsAt, timerRemainingSeconds: null, timerRunning: true },
       });
 
@@ -56,7 +56,7 @@ export function registerTimerTools(server: McpServer, userId: string) {
       const remainingSec = Math.max(0, Math.ceil((task.timerEndsAt.getTime() - Date.now()) / 1000));
 
       const updated = await prisma.tasks.update({
-        where: { id: input.taskId },
+        where: { id: input.taskId, userId },
         data: { timerRunning: false, timerRemainingSeconds: remainingSec, timerEndsAt: null },
       });
 
@@ -75,7 +75,7 @@ export function registerTimerTools(server: McpServer, userId: string) {
       if (!existing) throw new Error("Task not found");
 
       const updated = await prisma.tasks.update({
-        where: { id: input.taskId },
+        where: { id: input.taskId, userId },
         data: { timerRunning: false, timerRemainingSeconds: null, timerEndsAt: null, timerStartedAt: null },
       });
 

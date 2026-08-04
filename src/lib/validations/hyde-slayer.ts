@@ -72,7 +72,9 @@ export const updateRelaxationExerciseSchema = createRelaxationExerciseSchema.par
 
 export const completeRelaxationLogSchema = z.object({
   exerciseId: id,
-  duration: z.number().int().positive(),
+  // Duración en minutos con cota superior: evita farmear XP/disciplina
+  // masiva enviando duraciones arbitrarias (1_000_000 → ~166.000 XP).
+  duration: z.number().int().min(1).max(240),
 });
 
 export type CreateRelaxationExerciseInput = z.infer<typeof createRelaxationExerciseSchema>;
@@ -164,11 +166,6 @@ export const createItemSchema = z.object({
 
 export const updateItemSchema = createItemSchema.partial().extend({ id });
 
-export const addToInventorySchema = z.object({
-  itemId: id,
-  quantity: z.number().int().positive().default(1),
-});
-
 export const updateInventorySchema = z.object({
   id,
   quantity: z.number().int().positive().optional(),
@@ -177,7 +174,6 @@ export const updateInventorySchema = z.object({
 
 export type CreateItemInput = z.infer<typeof createItemSchema>;
 export type UpdateItemInput = z.infer<typeof updateItemSchema>;
-export type AddToInventoryInput = z.infer<typeof addToInventorySchema>;
 export type UpdateInventoryInput = z.infer<typeof updateInventorySchema>;
 
 // ═══════════════════════════════════════════════════════════════

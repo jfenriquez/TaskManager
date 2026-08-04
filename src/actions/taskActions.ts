@@ -139,11 +139,32 @@ export async function importTasks(tasks: ImportTaskInput[]) {
     throw new Error("No autenticado: no hay userId en la sesión");
   }
   try {
+    const MAX_IMPORT = 500;
+    if (tasks.length > MAX_IMPORT) {
+      throw new Error(`Máximo ${MAX_IMPORT} tareas por importación`);
+    }
+    for (const task of tasks) {
+      if (!task.title || task.title.trim() === "") {
+        throw new Error("Todas las tareas deben tener un título");
+      }
+    }
+
     const user = await prisma.user.findUnique({
       where: { id: userId.toString() },
       select: { timezone: true },
     });
     const tz = user?.timezone || "UTC";
+
+    // Validar que todas las categorías referenciadas pertenezcan al usuario
+    const categoryIds = [...new Set(tasks.map((t) => t.categoryId).filter((id): id is string => !!id))];
+    if (categoryIds.length > 0) {
+      const owned = await prisma.category.count({
+        where: { id: { in: categoryIds }, userId: userId.toString() },
+      });
+      if (owned !== categoryIds.length) {
+        throw new Error("Algunas categorías no pertenecen al usuario");
+      }
+    }
 
     const createdTasks = await prisma.$transaction(
       tasks.map((task) => {
@@ -156,7 +177,7 @@ export async function importTasks(tasks: ImportTaskInput[]) {
         }
         return prisma.tasks.create({
           data: {
-            title: task.title || "Sin título",
+            title: (task.title ?? "").trim(),
             description: task.description || null,
             completed: task.completed || false,
             priority: task.priority || "MEDIUM",
@@ -240,6 +261,13 @@ export async function createTask(task: TaskInput) {
     });
     const tz = user?.timezone || "UTC";
 
+    if (task.categoryId) {
+      const owned = await prisma.category.count({
+        where: { id: task.categoryId, userId: userId.toString() },
+      });
+      if (owned === 0) throw new Error("La categoría no pertenece al usuario");
+    }
+
     const newTask = await prisma.tasks.create({
       data: {
         userId: userId.toString(),
@@ -290,6 +318,14 @@ export const updateTask = async ({ task }: Itask) => {
       ...(task.categoryId !== undefined && { categoryId: task.categoryId }),
     };
 
+    // Validar ownership de la categoría antes de asignarla
+    if (task.categoryId !== undefined && task.categoryId !== null) {
+      const owned = await prisma.category.count({
+        where: { id: task.categoryId, userId: uid },
+      });
+      if (owned === 0) throw new Error("La categoría no pertenece al usuario");
+    }
+
     const updateTask = await prisma.tasks.update({
       data,
       where: { id: task.id, userId: uid },
@@ -319,7 +355,7 @@ export const updateStatusTask = async (id: string, completed: boolean) => {
 
     const updateTask = await prisma.tasks.update({
       data: { completed: completed },
-      where: { id: id },
+      where: { id: id, userId: userId.toString() },
     });
 
     await updateStreakOnTaskToggle();
@@ -360,7 +396,7 @@ export const deleteTaskXid = async (id: string) => {
     }
 
     const deleteTask = await prisma.tasks.delete({
-      where: { id: id },
+      where: { id: id, userId: userId.toString() },
     });
     revalidatePath("/");
     return deleteTask;
@@ -501,7 +537,7 @@ export async function startTaskTimer(taskId: string, minutes?: number) {
   const endsAt = new Date(Date.now() + secondsToUse * 1000);
 
   const updated = await prisma.tasks.update({
-    where: { id: taskId },
+    where: { id: taskId, userId: userId.toString() },
     data: {
       timerStartedAt: now,
       timerEndsAt: endsAt,
@@ -537,7 +573,7 @@ export async function pauseTaskTimer(taskId: string) {
   );
 
   const updated = await prisma.tasks.update({
-    where: { id: taskId },
+    where: { id: taskId, userId: userId.toString() },
     data: {
       timerRunning: false,
       timerRemainingSeconds: remainingSec,
@@ -561,7 +597,7 @@ export async function stopTaskTimer(taskId: string) {
   const existing = await prisma.tasks.findFirst({ where: { id: taskId, userId: userId.toString() } });
   if (!existing) throw new Error("Task not found");
   const updated = await prisma.tasks.update({
-    where: { id: taskId },
+    where: { id: taskId, userId: userId.toString() },
     data: {
       timerRunning: false,
       timerRemainingSeconds: null,
@@ -579,6 +615,10 @@ export async function getProfileStats(startDate?: string, endDate?: string) {
   const userId = await getCurrentUserId();
   if (!userId) throw new Error("No autenticado");
   const uid = userId.toString();
+
+  const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+  if (startDate && !DATE_RE.test(startDate)) throw new Error("Formato de fecha inválido (YYYY-MM-DD)");
+  if (endDate && !DATE_RE.test(endDate)) throw new Error("Formato de fecha inválido (YYYY-MM-DD)");
 
   const taskWhere: Record<string, unknown> = { userId: uid };
   if (startDate || endDate) {

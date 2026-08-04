@@ -77,11 +77,13 @@ export async function getXpHistory(
 > {
   try {
     const { playerId } = await requirePlayerProfile();
+    // Tope superior para evitar queries pesadas con valores arbitrarios.
+    const safeLimit = Math.max(1, Math.min(limit, 100));
 
     const logs = await prisma.xpLog.findMany({
       where: { playerId },
       orderBy: { createdAt: "desc" },
-      take: limit,
+      take: safeLimit,
     });
 
     return ok(logs);
@@ -104,8 +106,9 @@ export async function getDailyLogs(
 > {
   try {
     const { playerId } = await requirePlayerProfile();
+    const safeDays = Math.max(1, Math.min(days, 365));
     const since = new Date();
-    since.setDate(since.getDate() - days);
+    since.setDate(since.getDate() - safeDays);
 
     const logs = await prisma.dailyLog.findMany({
       where: { playerId, date: { gte: since } },

@@ -6,7 +6,6 @@ import { Prisma } from "@prisma/client";
 import {
   createItemSchema,
   updateItemSchema,
-  addToInventorySchema,
   updateInventorySchema,
 } from "@/src/lib/validations/hyde-slayer";
 import {
@@ -95,47 +94,16 @@ export async function getInventory(): Promise<
   }
 }
 
-export async function addToInventory(input: unknown): Promise<ActionResult<{ id: string; itemName: string }>> {
-  try {
-    const { playerId } = await requirePlayerProfile();
-    const data = addToInventorySchema.parse(input);
-
-    const item = await prisma.item.findUnique({ where: { id: data.itemId } });
-    if (!item) return fail("Ítem no encontrado");
-
-    const existing = await prisma.inventory.findUnique({
-      where: { playerId_itemId: { playerId, itemId: data.itemId } },
-    });
-
-    if (existing) {
-      await prisma.inventory.update({
-        where: { id: existing.id },
-        data: { quantity: { increment: data.quantity } },
-      });
-    } else {
-      await prisma.inventory.create({
-        data: { playerId, itemId: data.itemId, quantity: data.quantity },
-      });
-    }
-
-    revalidatePath("/hyde-slayer");
-    return ok({ id: data.itemId, itemName: item.name });
-  } catch (err) {
-    return handleActionError(err);
-  }
-}
-
 export async function updateInventoryItem(input: unknown): Promise<ActionResult<{ id: string }>> {
   try {
     const { playerId } = await requirePlayerProfile();
     const data = updateInventorySchema.parse(input);
 
-    const inv = await prisma.inventory.findFirst({
+    const result = await prisma.inventory.updateMany({
       where: { id: data.id, playerId },
+      data,
     });
-    if (!inv) return fail("Ítem no encontrado en tu inventario");
-
-    await prisma.inventory.update({ where: { id: data.id }, data });
+    if (result.count === 0) return fail("Ítem no encontrado en tu inventario");
 
     revalidatePath("/hyde-slayer");
     return ok({ id: data.id });
@@ -148,12 +116,10 @@ export async function removeFromInventory(id: string): Promise<ActionResult<void
   try {
     const { playerId } = await requirePlayerProfile();
 
-    const inv = await prisma.inventory.findFirst({
+    const result = await prisma.inventory.deleteMany({
       where: { id, playerId },
     });
-    if (!inv) return fail("Ítem no encontrado en tu inventario");
-
-    await prisma.inventory.delete({ where: { id } });
+    if (result.count === 0) return fail("Ítem no encontrado en tu inventario");
 
     revalidatePath("/hyde-slayer");
     return ok(undefined);

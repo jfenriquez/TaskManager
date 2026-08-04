@@ -6,6 +6,7 @@ import { registerCategoryTools } from "@/src/lib/mcp-tools/categories";
 import { registerTimerTools } from "@/src/lib/mcp-tools/timer";
 import { registerStreakTools } from "@/src/lib/mcp-tools/streaks";
 import { registerResources } from "@/src/lib/mcp-resources/index";
+import { clientIp, rateLimit } from "@/src/lib/rate-limit";
 
 function buildMcpServer(userId: string): McpServer {
   const server = new McpServer(
@@ -36,6 +37,15 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  // Cada request con API key inválida ejecuta una comparación bcrypt (~50-100 ms
+  // de CPU); el rate limit por IP evita el abuso como vector de DoS.
+  if (!rateLimit(`mcp:post:${clientIp(request.headers)}`, 30)) {
+    return NextResponse.json(
+      { jsonrpc: "2.0", id: null, error: { code: -32001, message: "Too many requests" } },
+      { status: 429 }
+    );
+  }
+
   const raw = await request.clone().json();
 
   if (raw?.method === "initialize") {
