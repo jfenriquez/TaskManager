@@ -23,95 +23,109 @@ async function main() {
   await connectWithRetry();
 
   // ── Seed user ──────────────────────────────────────────────
+  // Credenciales desde env: evita dejar una cuenta conocida en producción.
+  // Si el entorno es producción, aborta a menos que SEED_EMAIL se defina
+  // explícitamente (y aun así la contraseña debe venir de SEED_PASSWORD).
+  const isProduction = process.env.NODE_ENV === "production";
+  const seedEmail = process.env.SEED_EMAIL;
+  const seedPassword = process.env.SEED_PASSWORD;
+
+  if (isProduction && !seedEmail) {
+    throw new Error("No ejecutar el seed en producción sin SEED_EMAIL explícito");
+  }
+  if (seedEmail && !seedPassword) {
+    throw new Error("SEED_PASSWORD es obligatorio cuando se define SEED_EMAIL");
+  }
+
   const seedUserId = randomUUID();
-  const seedEmail = "user1@example.com";
-  const seedPassword = "password123";
 
-  const existingUser = await prisma.user.findUnique({ where: { email: seedEmail } });
-  const actualUserId = existingUser?.id ?? seedUserId;
+  if (seedEmail) {
+    const existingUser = await prisma.user.findUnique({ where: { email: seedEmail } });
+    const actualUserId = existingUser?.id ?? seedUserId;
 
-  if (!existingUser) {
-    await prisma.user.create({
-      data: {
-        id: seedUserId,
-        name: "Seed User",
-        email: seedEmail,
-        image: null,
-        emailVerified: true,
-        role: "USER",
-      },
+    if (!existingUser) {
+      await prisma.user.create({
+        data: {
+          id: seedUserId,
+          name: "Seed User",
+          email: seedEmail,
+          image: null,
+          emailVerified: true,
+          role: "USER",
+        },
+      });
+    }
+
+    const hashed = await hashPassword(seedPassword!);
+    const existingAccount = await prisma.account.findFirst({
+      where: { userId: actualUserId, providerId: "credential" },
     });
-  }
+    if (!existingAccount) {
+      await prisma.account.create({
+        data: {
+          id: randomUUID(),
+          userId: actualUserId,
+          accountId: seedEmail,
+          providerId: "credential",
+          password: hashed,
+        },
+      });
+      console.log(`🔐 Cuenta credentials creada para ${seedEmail}`);
+    }
 
-  const hashed = await hashPassword(seedPassword);
-  const existingAccount = await prisma.account.findFirst({
-    where: { userId: actualUserId, providerId: "credential" },
-  });
-  if (!existingAccount) {
-    await prisma.account.create({
-      data: {
-        id: randomUUID(),
+    // ── Player Profile ─────────────────────────────────────────
+    let playerProfile = await prisma.playerProfile.findUnique({
+      where: { userId: actualUserId },
+    });
+    if (!playerProfile) {
+      playerProfile = await prisma.playerProfile.create({
+        data: {
+          userId: actualUserId,
+          level: 1,
+          xp: 0,
+          coins: 100,
+          discipline: 0,
+          playerName: "Guerrero",
+        },
+      });
+      console.log("🎮 Perfil de jugador creado");
+    }
+
+    // ── Categories ─────────────────────────────────────────────
+    const catData = [
+      { name: "Sueño", color: "#6366f1" },
+      { name: "Trabajo", color: "#ef4444" },
+      { name: "Estudio", color: "#10b981" },
+      { name: "Ocio y entretenimiento", color: "#f59e0b" },
+      { name: "Cuidado personal", color: "#ec4899" },
+      { name: "Comidas y bebidas", color: "#f97316" },
+      { name: "Tareas del hogar", color: "#14b8a6" },
+      { name: "Desplazamientos", color: "#8b5cf6" },
+    ];
+
+    const categories = await Promise.all(
+      catData.map((c) =>
+        prisma.category.upsert({
+          where: { id: `${actualUserId}_${c.name}` },
+          update: {},
+          create: { id: `${actualUserId}_${c.name}`, name: c.name, color: c.color, userId: actualUserId },
+        })
+      )
+    );
+
+    // ── Tasks ──────────────────────────────────────────────────
+    await prisma.tasks.upsert({
+      where: { id: `${actualUserId}_task_1` },
+      update: {},
+      create: {
+        id: `${actualUserId}_task_1`,
+        title: "Comprar alimentos",
+        description: "Ir al supermercado y comprar frutas, verduras y leche",
         userId: actualUserId,
-        accountId: seedEmail,
-        providerId: "credential",
-        password: hashed,
+        categoryId: categories[5].id,
       },
     });
-    console.log(`🔐 Cuenta credentials creada para ${seedEmail}`);
   }
-
-  // ── Player Profile ─────────────────────────────────────────
-  let playerProfile = await prisma.playerProfile.findUnique({
-    where: { userId: actualUserId },
-  });
-  if (!playerProfile) {
-    playerProfile = await prisma.playerProfile.create({
-      data: {
-        userId: actualUserId,
-        level: 1,
-        xp: 0,
-        coins: 100,
-        discipline: 0,
-        playerName: "Guerrero",
-      },
-    });
-    console.log("🎮 Perfil de jugador creado");
-  }
-
-  // ── Categories ─────────────────────────────────────────────
-  const catData = [
-    { name: "Sueño", color: "#6366f1" },
-    { name: "Trabajo", color: "#ef4444" },
-    { name: "Estudio", color: "#10b981" },
-    { name: "Ocio y entretenimiento", color: "#f59e0b" },
-    { name: "Cuidado personal", color: "#ec4899" },
-    { name: "Comidas y bebidas", color: "#f97316" },
-    { name: "Tareas del hogar", color: "#14b8a6" },
-    { name: "Desplazamientos", color: "#8b5cf6" },
-  ];
-
-  const categories = await Promise.all(
-    catData.map((c) =>
-      prisma.category.upsert({
-        where: { id: `${actualUserId}_${c.name}` },
-        update: {},
-        create: { id: `${actualUserId}_${c.name}`, name: c.name, color: c.color, userId: actualUserId },
-      })
-    )
-  );
-
-  // ── Tasks ──────────────────────────────────────────────────
-  await prisma.tasks.upsert({
-    where: { id: `${actualUserId}_task_1` },
-    update: {},
-    create: {
-      id: `${actualUserId}_task_1`,
-      title: "Comprar alimentos",
-      description: "Ir al supermercado y comprar frutas, verduras y leche",
-      userId: actualUserId,
-      categoryId: categories[5].id,
-    },
-  });
 
   // ── Vitamentes (Affirmations) ──────────────────────────────
   const vitamentes = [

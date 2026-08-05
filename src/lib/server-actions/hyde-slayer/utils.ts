@@ -27,6 +27,18 @@ export async function requireUserId(): Promise<string> {
   return session.user.id;
 }
 
+export async function requireAdmin(): Promise<{ userId: string }> {
+  const userId = await requireUserId();
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { role: true },
+  });
+  if (user?.role !== "ADMIN") {
+    throw new ActionError("Requiere rol ADMIN");
+  }
+  return { userId };
+}
+
 export async function requirePlayerProfile(): Promise<{
   userId: string;
   playerId: string;

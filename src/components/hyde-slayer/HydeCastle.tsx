@@ -34,17 +34,23 @@ export default function HydeCastle() {
   const [totalXp, setTotalXp] = useState(0);
   const [loading, setLoading] = useState(true);
   const [conqueringId, setConqueringId] = useState<string | null>(null);
+  const [conquerError, setConquerError] = useState<string | null>(null);
 
   const handleConquer = async (boss: CastleBoss) => {
     setConqueringId(boss.id);
+    setConquerError(null);
     try {
       const level = bosses.find((b) => b.id === boss.id);
       if (!level) return;
-      await updateCastleProgress({
+      const res = await updateCastleProgress({
         castleLevelId: boss.id,
         defeated: true,
         attempts: 1,
       });
+      if (!res.success) {
+        setConquerError(res.error);
+        return;
+      }
       const [progressRes] = await Promise.all([getCastleProgress()]);
       if (progressRes.success) {
         const progressMap = new Map(progressRes.data.map(p => [p.castleLevelId, p]));
@@ -203,23 +209,30 @@ export default function HydeCastle() {
                     <span className="text-sm font-bold" style={{ color: "var(--hs-success)" }}>¡Derrotado!</span>
                   </div>
                 ) : (
-                  <>
-                    <button
-                      onClick={() => handleConquer(selectedBoss)}
-                      disabled={conqueringId === selectedBoss.id || totalXp < selectedBoss.xpRequired}
-                      className={`hs-btn flex-1 ${totalXp < selectedBoss.xpRequired ? "opacity-50" : ""}`}
-                    >
-                      {conqueringId === selectedBoss.id ? (
-                        <Loader2 className="w-4 h-4 animate-spin inline mr-2" />
-                      ) : (
-                        <Trophy className="w-4 h-4 inline mr-2" />
-                      )}
-                      {totalXp < selectedBoss.xpRequired ? `Requiere ${selectedBoss.xpRequired} XP` : "¡Conquistar!"}
-                    </button>
-                    <button className="hs-btn-ghost flex-1" onClick={() => window.location.href = "/hyde-slayer?module=batalla"}>
-                      <Swords className="w-4 h-4 inline mr-2" /> Combatir
-                    </button>
-                  </>
+                  <div className="flex-1 space-y-3">
+                    {conquerError && (
+                      <p className="text-xs text-[var(--hs-danger)]">
+                        {conquerError}
+                      </p>
+                    )}
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() => handleConquer(selectedBoss)}
+                        disabled={conqueringId === selectedBoss.id || totalXp < selectedBoss.xpRequired}
+                        className={`hs-btn flex-1 ${totalXp < selectedBoss.xpRequired ? "opacity-50" : ""}`}
+                      >
+                        {conqueringId === selectedBoss.id ? (
+                          <Loader2 className="w-4 h-4 animate-spin inline mr-2" />
+                        ) : (
+                          <Trophy className="w-4 h-4 inline mr-2" />
+                        )}
+                        {totalXp < selectedBoss.xpRequired ? `Requiere ${selectedBoss.xpRequired} XP` : "¡Conquistar!"}
+                      </button>
+                      <button className="hs-btn-ghost flex-1" onClick={() => window.location.href = "/hyde-slayer?module=batalla"}>
+                        <Swords className="w-4 h-4 inline mr-2" /> Combatir
+                      </button>
+                    </div>
+                  </div>
                 )}
               </div>
             </motion.div>

@@ -3,11 +3,11 @@
 import { prisma } from "@/src/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { deletePactSchema } from "@/src/lib/validations/hyde-slayer";
-import { requirePlayerProfile, ok, fail, handleActionError, type ActionResult } from "../utils";
+import { requireAdmin, ok, fail, handleActionError, type ActionResult } from "../utils";
 
 export async function deletePact(input: unknown): Promise<ActionResult<void>> {
   try {
-    await requirePlayerProfile();
+    await requireAdmin();
     const { pactId } = deletePactSchema.parse(input);
     const existing = await prisma.pact.findUnique({ where: { id: pactId } });
     if (!existing) return fail("Pacto no encontrado");

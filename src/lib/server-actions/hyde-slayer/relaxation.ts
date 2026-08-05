@@ -9,6 +9,7 @@ import {
 } from "@/src/lib/validations/hyde-slayer";
 import {
   requirePlayerProfile,
+  requireAdmin,
   ok,
   handleActionError,
   awardXp,
@@ -41,6 +42,7 @@ export async function createExercise(input: unknown): Promise<
   ActionResult<{ id: string; name: string }>
 > {
   try {
+    await requireAdmin();
     const data = createRelaxationExerciseSchema.parse(input);
     const exercise = await prisma.relaxationExercise.create({ data });
     revalidatePath("/hyde-slayer");
@@ -52,6 +54,7 @@ export async function createExercise(input: unknown): Promise<
 
 export async function updateExercise(input: unknown): Promise<ActionResult<{ id: string }>> {
   try {
+    await requireAdmin();
     const data = updateRelaxationExerciseSchema.parse(input);
     await prisma.relaxationExercise.update({ where: { id: data.id }, data });
     revalidatePath("/hyde-slayer");
@@ -78,6 +81,21 @@ export async function completeExercise(input: unknown): Promise<
     });
     if (!exercise) return { success: false, error: "Ejercicio no encontrado" };
 
+    // La duración declarada no puede superar 2x la duración oficial del
+    // ejercicio, y hay un máximo de 3 ejercicios completados por día.
+    if (data.duration > exercise.duration * 2) {
+      return { success: false, error: "La duración declarada supera la duración del ejercicio" };
+    }
+
+    const todayStart = new Date(new Date().setHours(0, 0, 0, 0));
+    const completedToday = await prisma.relaxationLog.count({
+      where: { playerId, completedAt: { gte: todayStart } },
+    });
+    const MAX_DAILY_COMPLETIONS = 3;
+    if (completedToday >= MAX_DAILY_COMPLETIONS) {
+      return { success: false, error: "Ya completaste el máximo de ejercicios hoy" };
+    }
+
     await prisma.relaxationLog.create({
       data: {
         playerId,
@@ -92,7 +110,6 @@ export async function completeExercise(input: unknown): Promise<
     await awardXp(playerId, XP_REWARD, "relaxation", exercise.name);
     await awardDiscipline(playerId, DISCIPLINE_REWARD);
 
-    const todayStart = new Date(new Date().setHours(0, 0, 0, 0));
     await prisma.dailyLog.upsert({
       where: { playerId_date: { playerId, date: todayStart } },
       create: { playerId, date: todayStart, xpEarned: XP_REWARD },

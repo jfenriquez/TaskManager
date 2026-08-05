@@ -30,18 +30,18 @@ export async function incrementPactProgress(input: unknown): Promise<
     );
     const isOverdue = elapsedDays > playerPact.pact.duration;
 
-    const newProgress = Math.min(data.progress, 100);
+    // El progreso lo declara el cliente, pero el servidor lo trata como DELTA
+    // con tope por llamada (+5): no se puede fijar el progreso absoluto.
+    const newProgress = Math.min(100, playerPact.progress + data.progress);
     const isComplete = newProgress >= 100;
-    const isOverdueCheck = isOverdue && !isComplete;
 
     const updateData: Record<string, unknown> = {
       progress: newProgress,
     };
 
-    if (isComplete) {
-      updateData.status = "COMPLETED";
-      updateData.completedAt = now;
-    } else if (isOverdue) {
+    // Al llegar a 100 el pacto sigue ACTIVE: las recompensas se otorgan una
+    // única vez en `completePact`, que exige progress >= 100.
+    if (isOverdue && !isComplete) {
       updateData.status = "FAILED";
       updateData.failedAt = now;
     }

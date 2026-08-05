@@ -69,7 +69,7 @@ export async function toggleMonthlyGoal(): Promise<MonthlyGoalData> {
   if (!current) throw new Error("No hay objetivo este mes");
 
   const goal = await prisma.goal.update({
-    where: { id: current.id },
+    where: { id: current.id, userId },
     data: { completed: !current.completed },
   });
 
@@ -199,7 +199,7 @@ export async function updateGoal(input: UpdateGoalInput): Promise<GoalResponse> 
   if (input.timeline !== undefined) data.timeline = input.timeline ? new Date(input.timeline) : null;
 
   const updated = await prisma.goal.update({
-    where: { id: input.id },
+    where: { id: input.id, userId },
     data,
   });
 
@@ -211,12 +211,10 @@ export async function deleteGoal(id: string): Promise<void> {
   const userId = await getCurrentUserId();
   if (!userId) throw new Error("No autenticado");
 
-  const existing = await prisma.goal.findFirst({
+  const deleted = await prisma.goal.deleteMany({
     where: { id, userId },
   });
-  if (!existing) throw new Error("Objetivo no encontrado");
-
-  await prisma.goal.delete({ where: { id } });
+  if (deleted.count === 0) throw new Error("Objetivo no encontrado");
   revalidatePath("/hyde-slayer");
 }
 
@@ -230,7 +228,7 @@ export async function toggleGoalCompleted(id: string): Promise<GoalResponse> {
   if (!existing) throw new Error("Objetivo no encontrado");
 
   const updated = await prisma.goal.update({
-    where: { id },
+    where: { id, userId },
     data: { completed: !existing.completed },
   });
 

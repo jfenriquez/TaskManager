@@ -39,9 +39,8 @@ export default function Features() {
           <h2 className="text-4xl md:text-5xl font-bold text-base-content">
             Todo lo que necesitas para tu día
           </h2>
-          <p className="mt-4 text-lg text-base-content/70 leading-relaxed">
-            Funciones pensadas para facilitar tu flujo de trabajo y mejorar tu
-            concentración.
+          <p className="mt-4 text-lg text-base-content/90 leading-relaxed">
+            Funciones pensadas para facilitar tu flujo de trabajo y mejorar tu concentración.
           </p>
           <div className="divider divider-primary mt-8"></div>
         </div>
@@ -77,7 +76,7 @@ export default function Features() {
                       <h3 className="card-title text-xl justify-center text-base-content group-hover:text-primary transition-colors">
                         {it.title}
                       </h3>
-                      <p className="text-base-content/70 leading-relaxed">
+                      <p className="text-base-content/90 leading-relaxed">
                         {it.desc}
                       </p>
                     </div>
@@ -128,7 +127,7 @@ export default function Features() {
 
             <div className="stat place-items-center">
               <div className="stat-title">Tareas completadas</div>
-              <div className="stat-value text-secondary">2.4M</div>
+              <div className="stat-value text-base-content">2.4M</div>
               <div className="stat-desc">↗︎ 8% este mes</div>
             </div>
 

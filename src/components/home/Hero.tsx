@@ -41,13 +41,13 @@ export default function Hero() {
           <div className="badge badge-primary badge-outline mb-4 shadow-sm">
             ✨ Productividad mejorada
           </div>
-          <h1 className="text-4xl md:text-6xl font-extrabold leading-tight text-primary/70">
+          <h1 className="text-4xl md:text-6xl font-extrabold leading-tight text-primary">
             Organiza tus días.{" "}
             <span className="text-primary drop-shadow-lg">
               Avanza sin esfuerzo.
             </span>
           </h1>
-          <p className="mt-6 text-base-content/70 max-w-xl text-lg leading-relaxed">
+          <p className="mt-6 text-base-content/90 max-w-xl text-lg leading-relaxed">
             TaskFlow es un administrador de tareas diario pensado para mantener
             tu foco y ritmo. Planifica, prioriza y consigue más con
             recordatorios inteligentes, modo lista rápida y estadísticas
@@ -108,7 +108,7 @@ export default function Hero() {
                     <div className="font-semibold text-base-content">
                       Planificación diaria
                     </div>
-                    <div className="text-sm text-base-content/60">
+                    <div className="text-sm text-base-content/80">
                       Rutinas y bloques de tiempo
                     </div>
                   </div>
@@ -126,7 +126,7 @@ export default function Hero() {
                     <div className="font-semibold text-base-content">
                       Fácil de usar
                     </div>
-                    <div className="text-sm text-base-content/60">
+                    <div className="text-sm text-base-content/80">
                       Interfaz limpia y accesible
                     </div>
                   </div>
@@ -162,7 +162,7 @@ export default function Hero() {
                         <div className="font-semibold text-base-content">
                           Revisar emails
                         </div>
-                        <div className="text-xs text-base-content/60 flex items-center gap-2">
+                        <div className="text-xs text-base-content/80 flex items-center gap-2">
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
                             className="h-3 w-3"
@@ -196,7 +196,7 @@ export default function Hero() {
                         <div className="font-semibold text-base-content">
                           Reunión con equipo
                         </div>
-                        <div className="text-xs text-base-content/70 flex items-center gap-2 font-medium">
+                        <div className="text-xs text-base-content/80 flex items-center gap-2 font-medium">
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
                             className="h-3 w-3"
@@ -229,7 +229,7 @@ export default function Hero() {
                         <div className="font-semibold text-base-content">
                           Terminar documento
                         </div>
-                        <div className="text-xs text-base-content/60 flex items-center gap-2">
+                        <div className="text-xs text-base-content/80 flex items-center gap-2">
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
                             className="h-3 w-3"

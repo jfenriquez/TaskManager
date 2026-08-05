@@ -70,7 +70,7 @@ export default function TaskTotalClient({ minutes: initialMinutes }: { minutes: 
         <PlaylistPlayer />
       </div>
       <TimezoneSelector />
-      <p className="text-sm text-gray-500">
+      <p className="text-sm text-base-content/70">
         Mostrando tareas para:{" "}
         {new Date().toLocaleDateString("es-ES", {
           timeZone: timezone,
@@ -86,7 +86,7 @@ export default function TaskTotalClient({ minutes: initialMinutes }: { minutes: 
                 <FaClock className="text-success text-xl" />
               </div>
               <div className="flex-1">
-                <p className="text-xs text-base-content/60 font-medium">
+                <p className="text-xs text-base-content/80 font-medium">
                   Hora actual
                 </p>
                 <p className="text-lg font-bold text-success">
@@ -105,13 +105,13 @@ export default function TaskTotalClient({ minutes: initialMinutes }: { minutes: 
                 <FaHourglassHalf className="text-primary text-xl" />
               </div>
               <div className="flex-1">
-                <p className="text-xs text-base-content/60 font-medium">
+                <p className="text-xs text-base-content/80 font-medium">
                   Tiempo total estimado
                 </p>
                 <p className="text-base font-bold text-primary">
                   {formatMinutes(minutes)}
                 </p>
-                <p className="text-xs text-base-content/50 mt-0.5">
+                <p className="text-xs text-base-content/70 mt-0.5">
                   {minutes} minutos
                 </p>
               </div>
@@ -127,11 +127,11 @@ export default function TaskTotalClient({ minutes: initialMinutes }: { minutes: 
                 <FaFlag className="text-info text-xl" />
               </div>
               <div className="flex-1">
-                <p className="text-xs text-base-content/60 font-medium">
+                <p className="text-xs text-base-content/80 font-medium">
                   Terminarías a las
                 </p>
                 <p className="text-lg font-bold text-info">{finishTime}</p>
-                <p className="text-xs text-base-content/50 mt-0.5">
+                <p className="text-xs text-base-content/70 mt-0.5">
                   Si empiezas ahora
                 </p>
               </div>

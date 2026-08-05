@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Swords, Shield, Zap, Skull, Heart, Crosshair, Flame, Trophy, ChevronRight, Sparkles, Loader2, Plus, Edit3, X, Check, AlertTriangle } from "lucide-react";
 import { getEnemies, createEnemy, updateEnemy, simulateBattle } from "@/src/lib/server-actions/hyde-slayer/battle";
-import { getPlayerProfile } from "@/src/lib/server-actions/hyde-slayer/player";
 
 interface Enemy {
   id: string;
@@ -31,8 +30,6 @@ const defaultCounters = [
 export default function BattleMode() {
   const [enemies, setEnemies] = useState<Enemy[]>([]);
   const [currentEnemy, setCurrentEnemy] = useState<Enemy | null>(null);
-  const [playerAttack, setPlayerAttack] = useState(10);
-  const [playerDefense, setPlayerDefense] = useState(5);
   const [playerHp, setPlayerHp] = useState(100);
   const [enemyHp, setEnemyHp] = useState(100);
   const [xp, setXp] = useState(0);
@@ -50,15 +47,8 @@ export default function BattleMode() {
 
   const load = useCallback(async () => {
     try {
-      const [enemiesRes, profileRes] = await Promise.all([
-        getEnemies(),
-        getPlayerProfile(),
-      ]);
-      if (enemiesRes.success) setEnemies(enemiesRes.data.filter((e: Enemy) => !e.isBoss));
-      if (profileRes.success) {
-        setPlayerAttack(Math.max(5, Math.floor(profileRes.data.level * 3)));
-        setPlayerDefense(Math.max(2, Math.floor(profileRes.data.level * 1.5)));
-      }
+      const enemiesRes = await getEnemies();
+      if (enemiesRes.success) setEnemies(enemiesRes.data);
     } finally {
       setLoading(false);
     }
@@ -108,8 +98,6 @@ export default function BattleMode() {
     try {
       const result = await simulateBattle({
         enemyId: currentEnemy.id,
-        playerAttack: playerAttack + combo * 2,
-        playerDefense,
       });
       if (result.success) {
         const data = result.data;

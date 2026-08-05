@@ -2,16 +2,13 @@
 
 import { prisma } from "@/src/lib/prisma";
 import { revalidatePath } from "next/cache";
-import { updatePlayerProfileSchema, addXpSchema } from "@/src/lib/validations/hyde-slayer";
+import { updatePlayerProfileSchema } from "@/src/lib/validations/hyde-slayer";
 import {
   requirePlayerProfile,
   requireUserId,
   ok,
   fail,
   handleActionError,
-  awardXp,
-  awardCoins,
-  awardDiscipline,
   type ActionResult,
 } from "./utils";
 
@@ -71,26 +68,6 @@ export async function updatePlayerProfile(
   }
 }
 
-export async function addXp(
-  input: unknown,
-): Promise<ActionResult<{ xp: number; level: number }>> {
-  try {
-    const { playerId } = await requirePlayerProfile();
-    const data = addXpSchema.parse(input);
-
-    await awardXp(playerId, data.amount, data.source, data.description);
-
-    const profile = await prisma.playerProfile.findUnique({
-      where: { id: playerId },
-      select: { xp: true, level: true },
-    });
-
-    return ok({ xp: profile!.xp, level: profile!.level });
-  } catch (err) {
-    return handleActionError(err);
-  }
-}
-
 export async function getXpHistory(
   limit = 20,
 ): Promise<
@@ -100,11 +77,13 @@ export async function getXpHistory(
 > {
   try {
     const { playerId } = await requirePlayerProfile();
+    // Tope superior para evitar queries pesadas con valores arbitrarios.
+    const safeLimit = Math.max(1, Math.min(limit, 100));
 
     const logs = await prisma.xpLog.findMany({
       where: { playerId },
       orderBy: { createdAt: "desc" },
-      take: limit,
+      take: safeLimit,
     });
 
     return ok(logs);
@@ -127,8 +106,9 @@ export async function getDailyLogs(
 > {
   try {
     const { playerId } = await requirePlayerProfile();
+    const safeDays = Math.max(1, Math.min(days, 365));
     const since = new Date();
-    since.setDate(since.getDate() - days);
+    since.setDate(since.getDate() - safeDays);
 
     const logs = await prisma.dailyLog.findMany({
       where: { playerId, date: { gte: since } },

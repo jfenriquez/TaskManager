@@ -16,11 +16,10 @@ import type { ActionResult } from "@/src/lib/server-actions/hyde-slayer/utils";
 
 interface PactProgressFormProps {
   pactId: string;
-  currentProgress: number;
   onProgressUpdated?: (progress: number, isComplete: boolean) => void;
 }
 
-export function PactProgressForm({ pactId, currentProgress, onProgressUpdated }: PactProgressFormProps) {
+export function PactProgressForm({ pactId, onProgressUpdated }: PactProgressFormProps) {
   const [isComplete, setIsComplete] = useState(false);
 
   const { submit, isPending, error } = useFormSubmit<
@@ -42,7 +41,7 @@ export function PactProgressForm({ pactId, currentProgress, onProgressUpdated }:
     formState: { errors },
   } = useForm<UpdatePactProgressInput>({
     resolver: zodResolver(updatePactProgressSchema),
-    defaultValues: { pactId, progress: currentProgress },
+    defaultValues: { pactId, progress: 5 },
   });
 
   const onSubmit = handleSubmit((data) => submit(data));
@@ -51,11 +50,12 @@ export function PactProgressForm({ pactId, currentProgress, onProgressUpdated }:
     <form onSubmit={onSubmit} className="flex items-end gap-3">
       <div className="flex-1">
         <FormInput
-          label="Progreso (%)"
+          label="¿Cuánto avanzaste? (+%)"
           type="number"
-          min={0}
-          max={100}
+          min={1}
+          max={5}
           error={errors.progress?.message}
+          helpText="El avance se suma al progreso actual (máx +5 por vez)"
           {...register("progress", { valueAsNumber: true })}
         />
       </div>

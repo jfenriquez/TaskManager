@@ -346,7 +346,6 @@ export default function Pacts({ onStatsChange }: PactsProps) {
                         >
                           <PactProgressForm
                             pactId={pp.pactId}
-                            currentProgress={pp.progress}
                             onProgressUpdated={(progress, isComplete) => {
                               if (isComplete) {
                                 handleComplete(pp.pactId);

@@ -6,7 +6,7 @@ import type { UserWithRole } from "@/src/types/auth";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { auth } from "@/src/lib/auth";
-import { getStartOfDay, getEndOfDay } from "@/src/utils/dateHelpers";
+import { getStartOfDay, getEndOfDay, normalizeDateUtc, getDateRangeUtc } from "@/src/utils/dateHelpers";
 import { updateStreakOnTaskToggle } from "@/src/actions/streakActions";
 export interface Itask {
   task: {
@@ -96,8 +96,12 @@ export const getTasksByDate = async (dateStr: string) => {
       throw new Error("No autenticado");
     }
 
-    const startOfDay = new Date(`${dateStr}T00:00:00.000Z`);
-    const endOfDay = new Date(`${dateStr}T23:59:59.999Z`);
+    const user = await prisma.user.findUnique({
+      where: { id: userId.toString() },
+      select: { timezone: true },
+    });
+    const tz = user?.timezone || "UTC";
+    const { start: startOfDay, end: endOfDay } = getDateRangeUtc(dateStr, tz);
 
     const tasksForDate = await prisma.tasks.findMany({
       where: {
@@ -135,24 +139,57 @@ export async function importTasks(tasks: ImportTaskInput[]) {
     throw new Error("No autenticado: no hay userId en la sesión");
   }
   try {
-    // Crear múltiples tareas en una transacción
+    const MAX_IMPORT = 500;
+    if (tasks.length > MAX_IMPORT) {
+      throw new Error(`Máximo ${MAX_IMPORT} tareas por importación`);
+    }
+    for (const task of tasks) {
+      if (!task.title || task.title.trim() === "") {
+        throw new Error("Todas las tareas deben tener un título");
+      }
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId.toString() },
+      select: { timezone: true },
+    });
+    const tz = user?.timezone || "UTC";
+
+    // Validar que todas las categorías referenciadas pertenezcan al usuario
+    const categoryIds = [...new Set(tasks.map((t) => t.categoryId).filter((id): id is string => !!id))];
+    if (categoryIds.length > 0) {
+      const owned = await prisma.category.count({
+        where: { id: { in: categoryIds }, userId: userId.toString() },
+      });
+      if (owned !== categoryIds.length) {
+        throw new Error("Algunas categorías no pertenecen al usuario");
+      }
+    }
+
     const createdTasks = await prisma.$transaction(
-      tasks.map((task) =>
-        prisma.tasks.create({
+      tasks.map((task) => {
+        let execDate: Date | null = null;
+        if (task.ExecutionDate) {
+          // Si es string YYYY-MM-DD, normalizar; si ya es Date, usar directamente
+          execDate = typeof task.ExecutionDate === "string"
+            ? normalizeDateUtc(task.ExecutionDate, tz)
+            : task.ExecutionDate;
+        }
+        return prisma.tasks.create({
           data: {
-            title: task.title || "Sin título",
+            title: (task.title ?? "").trim(),
             description: task.description || null,
             completed: task.completed || false,
             priority: task.priority || "MEDIUM",
             timerMinutes: task.timerMinutes || null,
-            ExecutionDate: task.ExecutionDate || null,
+            ExecutionDate: execDate,
             categoryId: task.categoryId || null,
-            userId: userId, // Ajusta según tu modelo
+            userId: userId,
           },
-        }),
-      ),
+        });
+      }),
     );
-    revalidatePath("/TasksTable"); // ajusta la ruta según tu app
+    revalidatePath("/TasksTable");
     return { success: true, count: createdTasks.length };
   } catch (error) {
     console.error("Error al importar tareas:", error);
@@ -218,18 +255,30 @@ export async function createTask(task: TaskInput) {
   }
 
   try {
+    const user = await prisma.user.findUnique({
+      where: { id: userId.toString() },
+      select: { timezone: true },
+    });
+    const tz = user?.timezone || "UTC";
+
+    if (task.categoryId) {
+      const owned = await prisma.category.count({
+        where: { id: task.categoryId, userId: userId.toString() },
+      });
+      if (owned === 0) throw new Error("La categoría no pertenece al usuario");
+    }
+
     const newTask = await prisma.tasks.create({
       data: {
-        userId: userId.toString(), // Reemplaza con el ID del usuario correspondiente
+        userId: userId.toString(),
         title: task.title,
         description: task.description ?? null,
         completed: task.completed ?? false,
-
         timerMinutes: task.timerMinutes ?? null,
         priority: task.priority,
         categoryId: task.categoryId ?? null,
         ExecutionDate: task.executionDate
-          ? new Date(task.executionDate + "T00:00:00.000Z")
+          ? normalizeDateUtc(task.executionDate, tz)
           : null,
       },
     });
@@ -250,16 +299,36 @@ export const updateTask = async ({ task }: Itask) => {
     throw new Error("No autenticado: no hay userId en la sesión");
   }
   try {
+    const uid = userId.toString();
     const res = await prisma.tasks.findFirst({
-      where: { id: task.id },
+      where: { id: task.id, userId: uid },
     });
     if (!res) {
       throw new Error("Task not found");
     }
 
+    // Whitelist explícita: nunca propagar campos arbitrarios del cliente (mass assignment)
+    const data = {
+      ...(task.title !== undefined && { title: task.title }),
+      ...(task.description !== undefined && { description: task.description }),
+      ...(task.completed !== undefined && { completed: task.completed }),
+      ...(task.timerMinutes !== undefined && { timerMinutes: task.timerMinutes }),
+      ...(task.priority !== undefined && { priority: task.priority }),
+      ...(task.ExecutionDate !== undefined && { ExecutionDate: task.ExecutionDate }),
+      ...(task.categoryId !== undefined && { categoryId: task.categoryId }),
+    };
+
+    // Validar ownership de la categoría antes de asignarla
+    if (task.categoryId !== undefined && task.categoryId !== null) {
+      const owned = await prisma.category.count({
+        where: { id: task.categoryId, userId: uid },
+      });
+      if (owned === 0) throw new Error("La categoría no pertenece al usuario");
+    }
+
     const updateTask = await prisma.tasks.update({
-      data: task,
-      where: { id: task.id, userId: userId.toString() },
+      data,
+      where: { id: task.id, userId: uid },
     });
     revalidatePath("/");
 
@@ -286,7 +355,7 @@ export const updateStatusTask = async (id: string, completed: boolean) => {
 
     const updateTask = await prisma.tasks.update({
       data: { completed: completed },
-      where: { id: id },
+      where: { id: id, userId: userId.toString() },
     });
 
     await updateStreakOnTaskToggle();
@@ -327,7 +396,7 @@ export const deleteTaskXid = async (id: string) => {
     }
 
     const deleteTask = await prisma.tasks.delete({
-      where: { id: id },
+      where: { id: id, userId: userId.toString() },
     });
     revalidatePath("/");
     return deleteTask;
@@ -468,7 +537,7 @@ export async function startTaskTimer(taskId: string, minutes?: number) {
   const endsAt = new Date(Date.now() + secondsToUse * 1000);
 
   const updated = await prisma.tasks.update({
-    where: { id: taskId },
+    where: { id: taskId, userId: userId.toString() },
     data: {
       timerStartedAt: now,
       timerEndsAt: endsAt,
@@ -504,7 +573,7 @@ export async function pauseTaskTimer(taskId: string) {
   );
 
   const updated = await prisma.tasks.update({
-    where: { id: taskId },
+    where: { id: taskId, userId: userId.toString() },
     data: {
       timerRunning: false,
       timerRemainingSeconds: remainingSec,
@@ -528,7 +597,7 @@ export async function stopTaskTimer(taskId: string) {
   const existing = await prisma.tasks.findFirst({ where: { id: taskId, userId: userId.toString() } });
   if (!existing) throw new Error("Task not found");
   const updated = await prisma.tasks.update({
-    where: { id: taskId },
+    where: { id: taskId, userId: userId.toString() },
     data: {
       timerRunning: false,
       timerRemainingSeconds: null,
@@ -546,6 +615,10 @@ export async function getProfileStats(startDate?: string, endDate?: string) {
   const userId = await getCurrentUserId();
   if (!userId) throw new Error("No autenticado");
   const uid = userId.toString();
+
+  const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+  if (startDate && !DATE_RE.test(startDate)) throw new Error("Formato de fecha inválido (YYYY-MM-DD)");
+  if (endDate && !DATE_RE.test(endDate)) throw new Error("Formato de fecha inválido (YYYY-MM-DD)");
 
   const taskWhere: Record<string, unknown> = { userId: uid };
   if (startDate || endDate) {

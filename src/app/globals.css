@@ -272,8 +272,7 @@
  */
 
 /* Light theme (default) */
-[data-theme="light"],
-:root {
+[data-theme="light"] {
   --primary: #2563eb;
   --primary-focus: #1d4ed8;
   --primary-content: #ffffff;
@@ -345,29 +344,21 @@
 html,
 body {
   @apply transition-colors duration-300;
-  background-color: var(--base-100);
-  color: var(--base-content);
+  background-color: var(--color-base-100);
+  color: var(--color-base-content);
 }
 
-/* Tailwind + DaisyUI theme overrides */
+/* Theme-aware utility classes (daisyUI native classes preferred over these) */
 @layer components {
   .card-dark {
-    @apply bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700;
-  }
-
-  .text-primary {
-    @apply text-blue-600 dark:text-blue-400;
-  }
-
-  .text-secondary {
-    @apply text-violet-600 dark:text-violet-400;
+    @apply bg-base-100 border border-base-300;
   }
 
   .text-muted {
-    @apply text-gray-500 dark:text-gray-400;
+    @apply text-base-content/60;
   }
 
   .btn-theme {
-    @apply bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700;
+    @apply bg-base-100 text-base-content border border-base-300 hover:bg-base-200;
   }
 }

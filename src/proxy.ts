@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { clientIp, rateLimit } from "@/src/lib/rate-limit";
 
 const publicPaths = [
   "/login",
@@ -14,6 +15,14 @@ const staticFilePattern = /\.(json|mp3|ico|svg|png|jpg|jpeg|gif|webp|woff2?|ttf|
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // Endpoints sensibles de auth: fuerza bruta de contraseña y email bombing
+  // (sign-in, sign-up, forget-password, send-verification-email, reset).
+  if (pathname.startsWith("/api/auth")) {
+    if (!rateLimit(`auth:${clientIp(request.headers)}`, 15)) {
+      return NextResponse.json({ error: "Demasiadas solicitudes, inténtalo más tarde" }, { status: 429 });
+    }
+  }
 
   if (
     publicPaths.some((p) => pathname.startsWith(p)) ||

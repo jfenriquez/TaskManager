@@ -153,6 +153,8 @@ export async function setDailyTaskGoal(goal: number): Promise<void> {
     maxAge: 365 * 24 * 60 * 60,
     path: "/",
     httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
   });
   revalidatePath("/profile");
 }

@@ -311,7 +311,7 @@ export default function TasksTable({
             {cat.name}
           </div>
         ) : (
-          <span className="text-base-content/40">—</span>
+          <span className="text-base-content/60">—</span>
         );
       },
       enableSorting: true,
@@ -415,7 +415,7 @@ export default function TasksTable({
       accessorKey: "description",
       header: "Descripción",
       cell: ({ row }) => (
-        <p className="text-sm text-base-content/70 line-clamp-2 max-w-xs">
+        <p className="text-sm text-base-content/90 line-clamp-2 max-w-xs">
           {row.original.description || "Sin descripción"}
         </p>
       ),
@@ -521,7 +521,7 @@ export default function TasksTable({
               <tr>
                 <td
                   colSpan={8}
-                  className="text-center py-8 text-base-content/60"
+                  className="text-center py-8 text-base-content/80"
                 >
                   No hay tareas aún. ¡Crea una nueva!
                 </td>
@@ -550,7 +550,7 @@ export default function TasksTable({
         <div className="grid gap-4 md:hidden">
           {tasks.length === 0 ? (
             <div className="card bg-base-100 shadow-xl p-6 text-center">
-              <p className="text-base-content/60">
+              <p className="text-base-content/80">
                 No hay tareas aún. ¡Crea una nueva!
               </p>
             </div>
@@ -579,14 +579,14 @@ export default function TasksTable({
                   <h3 className="font-bold text-lg mb-2">{task.title}</h3>
 
                   {task.description && (
-                    <p className="text-sm text-base-content/70 mb-4">
+                    <p className="text-sm text-base-content/90 mb-4">
                       {task.description}
                     </p>
                   )}
 
                   <div className="grid grid-cols-2 gap-3 text-sm">
                     <div>
-                      <span className="text-base-content/50">Categoría:</span>
+                      <span className="text-base-content/70">Categoría:</span>
                       <span className="ml-2">
                         {(() => {
                           const cat = categories.find(
@@ -609,13 +609,13 @@ export default function TasksTable({
                       </span>
                     </div>
                     <div>
-                      <span className="text-base-content/50">Tiempo:</span>
+                      <span className="text-base-content/70">Tiempo:</span>
                       <span className="ml-2 font-mono font-medium">
                         {formatTime(task.timerMinutes)}
                       </span>
                     </div>
                     <div>
-                      <span className="text-base-content/50">Ejecución:</span>
+                      <span className="text-base-content/70">Ejecución:</span>
                       <span className="ml-2">
                         {task.ExecutionDate
                           ? format(

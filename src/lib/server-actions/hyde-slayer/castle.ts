@@ -90,6 +90,25 @@ export async function updateCastleProgress(input: unknown): Promise<
       where: { playerId_castleLevelId: { playerId, castleLevelId: data.castleLevelId } },
     });
 
+    // Un nivel conquistado no se puede desmarcar (evita re-farmeo de recompensas)
+    if (data.defeated === false && existing?.defeated) {
+      return fail("Una vez conquistado, el nivel no se puede desmarcar");
+    }
+
+    // `defeated: true` solo se acepta si existe una victoria REAL contra el
+    // jefe de este nivel en el historial de batallas del servidor.
+    if (data.defeated === true) {
+      if (!castleLevel.bossId) {
+        return fail("Este nivel no tiene jefe asignado");
+      }
+      const bossVictory = await prisma.battleLog.count({
+        where: { playerId, enemyId: castleLevel.bossId, result: "VICTORY" },
+      });
+      if (bossVictory === 0) {
+        return fail("Debes derrotar al jefe en combate para conquistar este nivel");
+      }
+    }
+
     const progressData: Record<string, unknown> = {};
     if (data.defeated !== undefined) progressData.defeated = data.defeated;
     if (data.bestTime !== undefined) progressData.bestTime = data.bestTime;

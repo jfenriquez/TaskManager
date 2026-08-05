@@ -9,6 +9,7 @@ import {
 } from "@/src/lib/validations/hyde-slayer";
 import {
   requirePlayerProfile,
+  requireAdmin,
   ok,
   fail,
   handleActionError,
@@ -42,6 +43,7 @@ export async function getAchievements(): Promise<
 
 export async function createAchievement(input: unknown): Promise<ActionResult<{ id: string; name: string }>> {
   try {
+    await requireAdmin();
     const data = createAchievementSchema.parse(input);
     const achievement = await prisma.achievement.create({ data: data as Prisma.AchievementCreateInput });
     revalidatePath("/hyde-slayer");
@@ -53,6 +55,7 @@ export async function createAchievement(input: unknown): Promise<ActionResult<{ 
 
 export async function updateAchievement(input: unknown): Promise<ActionResult<{ id: string }>> {
   try {
+    await requireAdmin();
     const data = updateAchievementSchema.parse(input);
     await prisma.achievement.update({ where: { id: data.id }, data: data as Prisma.AchievementUpdateInput });
     revalidatePath("/hyde-slayer");
@@ -91,7 +94,10 @@ export async function getPlayerAchievements(): Promise<
   }
 }
 
-export async function unlockAchievement(achievementId: string): Promise<
+// Privada: solo se desbloquean logros desde checkAndUnlockAchievements,
+// que verifica las condiciones reales en el servidor. Un cliente nunca puede
+// invocarla directamente para farmear XP/monedas.
+async function unlockAchievement(achievementId: string): Promise<
   ActionResult<{
     name: string;
     xpEarned: number;

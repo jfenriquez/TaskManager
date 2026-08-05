@@ -10,7 +10,6 @@ import {
   type SimulateBattleInput,
 } from "@/src/lib/validations/hyde-slayer";
 import { simulateBattle } from "@/src/lib/server-actions/hyde-slayer/battle";
-import { FormInput } from "@/src/components/ui/form/FormInput";
 import { FormSelect } from "@/src/components/ui/form/FormSelect";
 import { useFormSubmit } from "@/src/hooks/useFormSubmit";
 
@@ -25,11 +24,9 @@ interface EnemyOption {
 
 interface BattleFormProps {
   enemies: EnemyOption[];
-  defaultAttack?: number;
-  defaultDefense?: number;
 }
 
-export function BattleForm({ enemies, defaultAttack = 10, defaultDefense = 5 }: BattleFormProps) {
+export function BattleForm({ enemies }: BattleFormProps) {
   const [battleLog, setBattleLog] = useState<string[]>([]);
   const [battleResult, setBattleResult] = useState<"VICTORY" | "DEFEAT" | null>(null);
 
@@ -49,8 +46,6 @@ export function BattleForm({ enemies, defaultAttack = 10, defaultDefense = 5 }: 
     resolver: zodResolver(simulateBattleSchema),
     defaultValues: {
       enemyId: "",
-      playerAttack: defaultAttack,
-      playerDefense: defaultDefense,
     },
   });
 
@@ -80,21 +75,6 @@ export function BattleForm({ enemies, defaultAttack = 10, defaultDefense = 5 }: 
         error={errors.enemyId?.message}
         {...register("enemyId")}
       />
-
-      <div className="grid grid-cols-2 gap-4">
-        <FormInput
-          label="Ataque"
-          type="number"
-          error={errors.playerAttack?.message}
-          {...register("playerAttack", { valueAsNumber: true })}
-        />
-        <FormInput
-          label="Defensa"
-          type="number"
-          error={errors.playerDefense?.message}
-          {...register("playerDefense", { valueAsNumber: true })}
-        />
-      </div>
 
       <AnimatePresence>
         {error && (

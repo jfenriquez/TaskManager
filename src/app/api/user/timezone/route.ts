@@ -48,6 +48,15 @@ export async function PATCH(request: Request) {
     if (!timezone || typeof timezone !== "string") {
       return NextResponse.json({ error: "Timezone inválido" }, { status: 400 });
     }
+    if (timezone.length > 64) {
+      return NextResponse.json({ error: "Timezone inválido" }, { status: 400 });
+    }
+    // Solo se aceptan zonas IANA válidas: evita persistir strings arbitrarios
+    // que rompan toLocaleDateString({ timeZone }) en rachas y tareas por día.
+    const validTimezones = Intl.supportedValuesOf("timeZone");
+    if (!validTimezones.includes(timezone)) {
+      return NextResponse.json({ error: "Timezone inválido" }, { status: 400 });
+    }
 
     const user = await prisma.user.update({
       where: { id: userId.toString() },
