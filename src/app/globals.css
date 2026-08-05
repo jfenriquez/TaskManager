@@ -344,8 +344,8 @@
 html,
 body {
   @apply transition-colors duration-300;
-  background-color: var(--base-100);
-  color: var(--base-content);
+  background-color: var(--color-base-100);
+  color: var(--color-base-content);
 }
 
 /* Theme-aware utility classes (daisyUI native classes preferred over these) */

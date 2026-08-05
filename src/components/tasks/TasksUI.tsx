@@ -316,7 +316,7 @@ export default function TasksUI({ data = [] }: TasksProps) {
                   {dateLoading ? (
                     <span className="loading loading-spinner loading-sm" />
                   ) : (
-                    <span className="text-sm sm:text-base font-medium capitalize truncate text-center">
+                    <span className="text-sm sm:text-base font-medium capitalize truncate text-center text-base-content">
                       {formatDisplayDate(selectedDate)}
                     </span>
                   )}
