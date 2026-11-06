@@ -1,6 +1,7 @@
 "use client";
 
 import { authClient } from "@/src/lib/auth-client";
+import { clearTtsCache } from "@/src/lib/ttsCache";
 import { useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 import Link from "next/link";
@@ -46,10 +47,12 @@ export default function Navbar() {
       await authClient.signOut({
         fetchOptions: {
           onSuccess: () => {
-            router.push("/login");
-            setTimeout(() => {
-              window.location.href = "/login";
-            }, 100);
+            void clearTtsCache().finally(() => {
+              router.push("/login");
+              setTimeout(() => {
+                window.location.href = "/login";
+              }, 100);
+            });
           },
           onError: (ctx) => {
             console.error("Error al cerrar sesión:", ctx.error);

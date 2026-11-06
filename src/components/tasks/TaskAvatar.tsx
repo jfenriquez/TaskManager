@@ -1,7 +1,15 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { FaSmile, FaFrown, FaMeh } from "react-icons/fa";
+import dynamic from "next/dynamic";
+import happyAnimation from "@/src/assets/animations/Emoji_34.json";
+import angryAnimation from "@/src/assets/animations/Emoji_31.json";
+import neutralAnimation from "@/src/assets/animations/Emoji_29.json";
+
+const Lottie = dynamic(() => import("lottie-react"), {
+  ssr: false,
+  loading: () => <span className="loading loading-spinner loading-sm" />,
+});
 
 type TaskLike = { completed?: boolean };
 
@@ -34,15 +42,13 @@ export default function TaskAvatar({
       : mood === "angry"
       ? "bg-red-100"
       : "bg-yellow-100";
-  const iconColor =
-    mood === "happy"
-      ? "text-green-600"
-      : mood === "angry"
-      ? "text-red-600"
-      : "text-yellow-600";
-  const Icon = mood === "happy" ? FaSmile : mood === "angry" ? FaFrown : FaMeh;
 
-  const [playerReady, setPlayerReady] = useState(false);
+  const animationData =
+    mood === "happy"
+      ? happyAnimation
+      : mood === "angry"
+      ? angryAnimation
+      : neutralAnimation;
 
   const [pulse, setPulse] = useState(false);
 
@@ -55,31 +61,6 @@ export default function TaskAvatar({
       clearTimeout(t);
     };
   }, [pending, completed]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const ce = (
-      window as unknown as Window & { customElements?: CustomElementRegistry }
-    ).customElements;
-    if (ce && typeof ce.get === "function" && ce.get("lottie-player")) {
-      queueMicrotask(() => setPlayerReady(true));
-      return;
-    }
-
-    const script = document.createElement("script");
-    script.src =
-      "https://unpkg.com/@lottiefiles/lottie-player@2.0.4/dist/lottie-player.js";
-    script.async = true;
-    script.onload = () => queueMicrotask(() => setPlayerReady(true));
-    script.onerror = () => console.warn("Failed to load lottie-player");
-    document.body.appendChild(script);
-
-    return () => {
-      try {
-        document.body.removeChild(script);
-      } catch {}
-    };
-  }, []);
 
   // size puede ser número (px) o string (e.g. 'w-16 h-16' si se usa tailwind directamente)
   const style: React.CSSProperties =
@@ -94,29 +75,15 @@ export default function TaskAvatar({
       aria-label={`Avatar de estado: ${mood}. ${pending} pendientes, ${completed} completadas`}
       title={`${pending} tareas pendientes — ${completed} completadas`}
     >
-      <div
-        className={`flex items-center justify-center w-3xl h-3xl ${iconColor} `}
-      >
-        {playerReady ? (
-          // @ts-expect-error - lottie-player is a web component loaded at runtime
-          <lottie-player
-            key={`${mood}-${pending}-${completed}`}
-            src={
-              mood === "happy"
-                ? "/animations/Emoji_34.json"
-                : mood === "angry"
-                ? "/animations/Emoji_31.json"
-                : "/animations/Emoji_29.json"
-            }
-            background="transparent"
-            speed="1"
-            loop
-            autoplay
-            style={{ width: "100%", height: "100%" }}
-          />
-        ) : (
-          <Icon aria-hidden />
-        )}
+      <div className="flex items-center justify-center w-full h-full">
+        <Lottie
+          key={`${mood}-${pending}-${completed}`}
+          animationData={animationData}
+          loop
+          autoplay
+          style={{ width: "100%", height: "100%" }}
+          rendererSettings={{ preserveAspectRatio: "xMidYMid meet" }}
+        />
       </div>
     </div>
   );

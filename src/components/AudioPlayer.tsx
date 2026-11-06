@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Play, Pause, SkipBack, SkipForward, Volume2 } from "lucide-react";
+import { Play, Pause, SkipBack, SkipForward, Volume2, Keyboard } from "lucide-react";
 import { motion } from "framer-motion";
 
 const tracks = [
@@ -34,13 +34,7 @@ export default function AudioPlayer() {
   // Play / Pause
   const togglePlay = () => {
     if (!audioRef.current) return;
-
-    if (isPlaying) {
-      audioRef.current.pause();
-    } else {
-      audioRef.current.play();
-    }
-    setIsPlaying(!isPlaying);
+    setIsPlaying((prev) => !prev);
   };
 
   // Next
@@ -67,11 +61,21 @@ export default function AudioPlayer() {
     return () => audio.removeEventListener("timeupdate", updateProgress);
   }, []);
 
-  // Autoplay when changing track
+  // Cargar solo cuando cambia la pista (no al pausar/reanudar)
   useEffect(() => {
     if (!audioRef.current) return;
     audioRef.current.load();
-    if (isPlaying) audioRef.current.play();
+  }, [currentTrackIndex]);
+
+  // Reproducir o pausar según el estado y la pista actual
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    if (isPlaying) {
+      audio.play().catch(() => {});
+    } else {
+      audio.pause();
+    }
   }, [currentTrackIndex, isPlaying]);
 
   useEffect(() => {
@@ -92,6 +96,21 @@ export default function AudioPlayer() {
       audioRef.current.volume = volume;
     }
   }, [volume]);
+
+  // Atajo de teclado: Alt + M (o Ctrl/Cmd + Alt + M) pausa/despausa la música
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (!event.altKey) return;
+      if (event.code !== "KeyM") return;
+
+      event.preventDefault();
+      event.stopPropagation();
+      setIsPlaying((prev) => !prev);
+    };
+
+    window.addEventListener("keydown", handleKeyDown, true);
+    return () => window.removeEventListener("keydown", handleKeyDown, true);
+  }, []);
 
   const handleScrub = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!audioRef.current) return;
@@ -158,6 +177,17 @@ export default function AudioPlayer() {
           <button onClick={nextTrack} className="btn btn-ghost btn-circle">
             <SkipForward size={22} />
           </button>
+        </div>
+
+        {/* Keyboard shortcuts hint */}
+        <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs text-base-content/60">
+          <span className="inline-flex items-center gap-1">
+            <Keyboard size={13} />
+            <kbd className="kbd kbd-xs">Alt</kbd>+<kbd className="kbd kbd-xs">N</kbd> Nueva tarea
+          </span>
+          <span>
+            <kbd className="kbd kbd-xs">Alt</kbd>+<kbd className="kbd kbd-xs">M</kbd> Pausa/Play
+          </span>
         </div>
       </div>
 

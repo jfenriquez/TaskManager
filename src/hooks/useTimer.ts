@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Task, TimerState } from "@/src/types/task.types";
 
 interface UseTimerProps {
@@ -13,8 +13,13 @@ export function useTimer({ tasks, onTimerEnd }: UseTimerProps) {
   const tasksRef = useRef(tasks);
   const onTimerEndRef = useRef(onTimerEnd);
 
-  tasksRef.current = tasks;
-  onTimerEndRef.current = onTimerEnd;
+  useEffect(() => {
+    tasksRef.current = tasks;
+  }, [tasks]);
+
+  useEffect(() => {
+    onTimerEndRef.current = onTimerEnd;
+  }, [onTimerEnd]);
 
   // Inicializar counts desde tasks
   useEffect(() => {
@@ -35,26 +40,48 @@ export function useTimer({ tasks, onTimerEnd }: UseTimerProps) {
   useEffect(() => {
     const interval = setInterval(() => {
       setCounts((prev) => {
-        const next = { ...prev };
         const currentTasks = tasksRef.current;
-        Object.keys(next).forEach((id) => {
-          const task = currentTasks.find((t) => t.id === id);
-          if (!task) return;
 
+        // Nada que actualizar: evita un re-render por segundo sin timers activos
+        const hasActiveTimers = currentTasks.some(
+          (t) => t.timerRunning || t.timerRemainingSeconds
+        );
+        if (!hasActiveTimers && Object.keys(prev).length === 0) {
+          return prev;
+        }
+
+        let changed = false;
+        const next: Record<string, TimerState> = {};
+
+        currentTasks.forEach((task) => {
+          let entry: TimerState;
           if (task.timerRunning && task.timerEndsAt) {
             const rem = Math.max(
               0,
               new Date(task.timerEndsAt).getTime() - Date.now()
             );
-            next[id] = { remainingMs: rem, running: true };
+            entry = { remainingMs: rem, running: true };
           } else {
             const remainingMs = task.timerRemainingSeconds
               ? task.timerRemainingSeconds * 1000
               : 0;
-            next[id] = { remainingMs, running: false };
+            entry = { remainingMs, running: false };
           }
+
+          const prevEntry = prev[task.id];
+          if (
+            !prevEntry ||
+            prevEntry.remainingMs !== entry.remainingMs ||
+            prevEntry.running !== entry.running
+          ) {
+            changed = true;
+          }
+          next[task.id] = entry;
         });
-        return next;
+
+        if (Object.keys(prev).length !== currentTasks.length) changed = true;
+
+        return changed ? next : prev;
       });
     }, 1000);
 
@@ -82,7 +109,7 @@ export function useTimer({ tasks, onTimerEnd }: UseTimerProps) {
     });
   }, [counts]);
 
-  const formatRemaining = (ms: number) => {
+  const formatRemaining = useCallback((ms: number) => {
     if (ms <= 0) return "00:00";
     const totalSec = Math.floor(ms / 1000);
     const hours = Math.floor(totalSec / 3600);
@@ -95,7 +122,7 @@ export function useTimer({ tasks, onTimerEnd }: UseTimerProps) {
         "0"
       )}`;
     return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
-  };
+  }, []);
 
   const markStoppedByUser = (taskId: string) => {
     stopByUserRef.current[taskId] = true;

@@ -75,8 +75,8 @@ export const getTasksXDay = async () => {
         ],
       },
       orderBy: [
-        { ExecutionDate: "asc" },
         { priority: "desc" },
+        { ExecutionDate: "asc" },
         { createdAt: "asc" },
       ],
     });
@@ -109,8 +109,8 @@ export const getTasksByDate = async (dateStr: string) => {
         ExecutionDate: { gte: startOfDay, lte: endOfDay },
       },
       orderBy: [
-        { ExecutionDate: "asc" },
         { priority: "desc" },
+        { ExecutionDate: "asc" },
         { createdAt: "asc" },
       ],
     });

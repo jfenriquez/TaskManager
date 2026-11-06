@@ -2,7 +2,7 @@
 
 import { useAuth } from "@/src/hooks/useAuth";
 import { Tasks } from "@prisma/client";
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useTasks } from "@/src/hooks/useTasks";
 import { useTimer } from "@/src/hooks/useTimer";
 import { useNotifications } from "@/src/hooks/useNotifications";
@@ -17,9 +17,11 @@ import TaskFilter from "@/src/components/tasks/TaskFilter";
 import TaskList from "@/src/components/tasks/TaskList";
 import TaskModal from "@/src/components/tasks/TaskModal";
 import { Task, NewTaskForm, FilterType } from "@/src/types/task.types";
-import TaskTotalTime from "./TaskTotalTime";
 
 import { getCategories, getTasksByDate } from "@/src/actions/taskActions";
+import { getMonthlyGoal } from "@/src/actions/goalActions";
+import { useSpeech } from "@/src/hooks/useSpeech";
+import { buildTtsSegments } from "@/src/utils/ttsSegments";
 import MonthlyGoal from "@/src/components/goal/MonthlyGoal";
 import { mapPrismaTaskToTask } from "@/src/utils/mapTask";
 import { useAppDispatch } from "@/src/store/hooks";
@@ -32,12 +34,20 @@ interface TasksProps {
 export default function TasksUI({ data = [] }: TasksProps) {
   const dispatch = useAppDispatch();
   const { user } = useAuth();
+  const userId = user?.id;
+  const {
+    speakSegments,
+    stop,
+    isSpeaking,
+    progress: speechProgress,
+    error: speechError,
+    clearError: clearSpeechError,
+  } = useSpeech();
 
   // Estados locales
   const [filter, setFilter] = useState<FilterType>("active");
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [highlightTask, setHighlightTask] = useState<string | null>(null);
 
   const [categories, setCategories] = useState<
     { id: string; name: string; color: string }[]
@@ -47,6 +57,22 @@ export default function TasksUI({ data = [] }: TasksProps) {
     getCategories()
       .then(setCategories)
       .catch(() => {});
+  }, []);
+
+  // Atajo de teclado: Alt + N (o Ctrl/Cmd + Alt + N) abre el formulario de nueva tarea
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (!event.altKey) return;
+      if (event.code !== "KeyN") return;
+
+      event.preventDefault();
+      event.stopPropagation();
+      setShowAddModal(true);
+      setShowEditModal(false);
+    };
+
+    window.addEventListener("keydown", handleKeyDown, true);
+    return () => window.removeEventListener("keydown", handleKeyDown, true);
   }, []);
 
   const [newTask, setNewTask] = useState<NewTaskForm>({
@@ -107,7 +133,9 @@ export default function TasksUI({ data = [] }: TasksProps) {
   const goPrevDay = () => setSelectedDate((prev) => shiftDate(prev, -1));
   const goToday = () => { if (todayDate) setSelectedDate(todayDate); };
 
-  const isToday = selectedDate && todayDate && selectedDate === todayDate;
+  const isToday = Boolean(
+    selectedDate && todayDate && selectedDate === todayDate
+  );
 
   const fetchTasksForDate = useCallback(async (dateStr: string) => {
     if (!dateStr) return;
@@ -126,13 +154,15 @@ export default function TasksUI({ data = [] }: TasksProps) {
     if (selectedDate) fetchTasksForDate(selectedDate);
   }, [selectedDate, fetchTasksForDate]);
 
-  const handleTimerEnd = useCallback((taskId: string) => {
-    setHighlightTask(taskId);
-    setTimeout(
-      () => setHighlightTask((prev) => (prev === taskId ? null : prev)),
-      5000
-    );
+  const {
+    ensureNotificationPermission,
+    showNotification,
+    playSound,
+    vibrate,
+    requestPermission,
+  } = useNotifications();
 
+  const handleTimerEnd = useCallback((taskId: string) => {
     playSound("coin");
     vibrate([200, 100, 200]);
 
@@ -147,7 +177,7 @@ export default function TasksUI({ data = [] }: TasksProps) {
     });
 
     stopTimer(taskId);
-  }, [tasks, stopTimer]);
+  }, [tasks, stopTimer, playSound, vibrate, ensureNotificationPermission, showNotification]);
 
   const { counts, formatRemaining, markStoppedByUser } = useTimer({
     tasks,
@@ -180,14 +210,6 @@ export default function TasksUI({ data = [] }: TasksProps) {
       document.removeEventListener("visibilitychange", updateTitle);
     };
   }, [counts, formatRemaining]);
-
-  const {
-    ensureNotificationPermission,
-    showNotification,
-    playSound,
-    vibrate,
-    requestPermission,
-  } = useNotifications();
 
   // Manejadores
   const handleStartTimerWithPrompt = (taskId: string) => {
@@ -275,6 +297,54 @@ export default function TasksUI({ data = [] }: TasksProps) {
     alert("Estado actual: " + result);
   };
 
+  // Lee en voz alta las tareas pendientes y el objetivo mensual
+  const readTasksAndGoal = useCallback(async () => {
+    if (isSpeaking) {
+      stop();
+      return;
+    }
+
+    let goalText = "No tienes un objetivo mensual definido.";
+    try {
+      const goal = await getMonthlyGoal();
+      if (goal?.title) {
+        goalText = `Tu objetivo de este mes es: ${goal.title}. ${
+          goal.completed ? "Ya está cumplido." : "Todavía está pendiente."
+        }`;
+      }
+    } catch {
+      goalText = "No se pudo leer el objetivo mensual.";
+    }
+
+    const segments = await buildTtsSegments({
+      userId,
+      tasks,
+      isToday,
+      goalText,
+    });
+
+    const fallbackText = segments
+      .map((segment) => segment.text)
+      .join(" ");
+
+    await speakSegments(segments, fallbackText);
+  }, [tasks, isSpeaking, stop, speakSegments, isToday, userId]);
+
+  // Atajo de teclado: Alt + L (o Ctrl/Cmd + Alt + L) lee tareas y objetivo
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (!event.altKey) return;
+      if (event.code !== "KeyL") return;
+
+      event.preventDefault();
+      event.stopPropagation();
+      void readTasksAndGoal();
+    };
+
+    window.addEventListener("keydown", handleKeyDown, true);
+    return () => window.removeEventListener("keydown", handleKeyDown, true);
+  }, [readTasksAndGoal]);
+
   // Sincroniza el total de minutos con Redux
   useEffect(() => {
     const total = tasks
@@ -284,8 +354,11 @@ export default function TasksUI({ data = [] }: TasksProps) {
   }, [tasks, dispatch]);
 
   // Cálculos
-  const stats = calculateStats(tasks);
-  const filteredTasks = filterTasks(tasks, filter);
+  const stats = useMemo(() => calculateStats(tasks), [tasks]);
+  const filteredTasks = useMemo(
+    () => filterTasks(tasks, filter),
+    [tasks, filter]
+  );
 
   return (
     <div className="min-h-screen bg-base-200 transition-colors duration-200">
@@ -361,8 +434,33 @@ export default function TasksUI({ data = [] }: TasksProps) {
                 filter={filter}
                 onFilterChange={setFilter}
                 onAddTask={() => setShowAddModal(true)}
+                onReadTasks={readTasksAndGoal}
+                isReading={isSpeaking}
               />
             </div>
+
+            {isSpeaking && speechProgress.total > 0 && (
+              <p className="mb-4 text-xs text-base-content/60">
+                {speechProgress.done === 0
+                  ? `Preparando audio (${speechProgress.total} segmentos)…`
+                  : `Leyendo ${speechProgress.done}/${speechProgress.total}…`}
+              </p>
+            )}
+
+            {speechError && (
+              <div className="alert alert-warning mb-4">
+                <span className="text-sm">
+                  No se pudo usar ElevenLabs: {speechError}. Se usó la voz del
+                  navegador.
+                </span>
+                <button
+                  className="btn btn-ghost btn-xs"
+                  onClick={clearSpeechError}
+                >
+                  Cerrar
+                </button>
+              </div>
+            )}
 
             {/* Lista de tareas */}
             <TaskList

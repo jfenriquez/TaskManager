@@ -1,6 +1,6 @@
 // hooks/useNotifications.ts
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 
 export function useNotifications() {
   const [notificationPermission, setNotificationPermission] =
@@ -30,7 +30,7 @@ export function useNotifications() {
     if (resetAudioRef.current) resetAudioRef.current.volume = 0.8;
   }, []);
 
-  const ensureNotificationPermission = async () => {
+  const ensureNotificationPermission = useCallback(async () => {
     if (typeof window === "undefined" || !("Notification" in window))
       return false;
     if (Notification.permission === "granted") {
@@ -44,41 +44,44 @@ export function useNotifications() {
     const perm = await Notification.requestPermission();
     setNotificationPermission(perm);
     return perm === "granted";
-  };
+  }, []);
 
-  const showNotification = (title: string, body?: string) => {
+  const showNotification = useCallback((title: string, body?: string) => {
     if (!("Notification" in window)) return;
     new Notification(title, { body });
-  };
+  }, []);
 
-  const playSound = (type: "start" | "end" | "coin" | "reset") => {
-    const audioMap = {
-      start: startAudioRef,
-      end: endAudioRef,
-      coin: coinAudioRef,
-      reset: resetAudioRef,
-    };
+  const playSound = useCallback(
+    (type: "start" | "end" | "coin" | "reset") => {
+      const audioMap = {
+        start: startAudioRef,
+        end: endAudioRef,
+        coin: coinAudioRef,
+        reset: resetAudioRef,
+      };
 
-    const audioRef = audioMap[type];
-    if (audioRef.current) {
-      audioRef.current.currentTime = 0;
-      audioRef.current.play().catch(() => {});
-    }
-  };
+      const audioRef = audioMap[type];
+      if (audioRef.current) {
+        audioRef.current.currentTime = 0;
+        audioRef.current.play().catch(() => {});
+      }
+    },
+    []
+  );
 
-  const vibrate = (pattern: number | number[]) => {
+  const vibrate = useCallback((pattern: number | number[]) => {
     if ("vibrate" in navigator) {
       try {
         navigator.vibrate?.(pattern);
       } catch {}
     }
-  };
+  }, []);
 
-  const requestPermission = async () => {
+  const requestPermission = useCallback(async () => {
     const result = await Notification.requestPermission();
     setNotificationPermission(result);
     return result;
-  };
+  }, []);
 
   return {
     notificationPermission,

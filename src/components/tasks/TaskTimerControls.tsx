@@ -13,6 +13,8 @@ type Timer = {
 type Task = {
   id: string;
   timerMinutes?: number | null;
+  timerStartedAt?: string | null;
+  timerEndsAt?: string | null;
 };
 
 type Props = {
@@ -37,17 +39,54 @@ export default function TaskTimerControls({
 
   const isFinished = timer.remainingMs === 0;
 
+  const hasActiveTimer = timer.running || timer.remainingMs > 0;
+
+  const totalMs = (() => {
+    if (task.timerMinutes && task.timerMinutes > 0) {
+      return task.timerMinutes * 60 * 1000;
+    }
+    if (timer.running && task.timerStartedAt && task.timerEndsAt) {
+      const start = new Date(task.timerStartedAt).getTime();
+      const end = new Date(task.timerEndsAt).getTime();
+      if (end > start) return end - start;
+    }
+    return null;
+  })();
+
+  const progress =
+    totalMs && totalMs > 0
+      ? Math.min(100, Math.max(0, (timer.remainingMs / totalMs) * 100))
+      : null;
+
+  const isCritical = progress !== null && progress <= 10;
+  const isLow = progress !== null && progress <= 25 && !isCritical;
+
+  const barColor = isCritical
+    ? "bg-error"
+    : isLow
+      ? "bg-warning"
+      : "bg-primary";
+
   return (
     <div className="space-y-3">
       {/* FILA 1: Tiempo restante y duración - Siempre horizontal */}
       <div className="flex items-center gap-2 flex-wrap">
         <div
-          className={`p-2 rounded-lg border-2 flex items-center gap-2 transition-all flex-1 min-w-0 ${
+          className={`relative overflow-hidden p-2 rounded-lg border-2 flex items-center gap-2 transition-all flex-1 min-w-0 ${
             isFinished
               ? "border-base-300 bg-base-200"
               : "border-primary/30 bg-base-100"
           }`}
           title="Temporizador"
+          role={hasActiveTimer ? "progressbar" : undefined}
+          aria-label={hasActiveTimer ? "Tiempo restante del temporizador" : undefined}
+          aria-valuemin={hasActiveTimer ? 0 : undefined}
+          aria-valuemax={hasActiveTimer ? 100 : undefined}
+          aria-valuenow={
+            hasActiveTimer && progress !== null
+              ? Math.round(progress)
+              : undefined
+          }
         >
           <FaClock
             className={`w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0 ${
@@ -70,12 +109,54 @@ export default function TaskTimerControls({
               {timeText}
             </motion.span>
           </div>
+
+          {hasActiveTimer && (
+            <div className="absolute inset-x-0 bottom-0 h-1.5 overflow-hidden bg-base-300/60">
+              <motion.div
+                className={`relative h-full rounded-r-full ${barColor} ${
+                  isCritical ? "animate-pulse" : ""
+                }`}
+                initial={false}
+                animate={{ width: progress !== null ? `${progress}%` : "100%" }}
+                transition={{ ease: "linear", duration: 0.9 }}
+              >
+                {timer.running && (
+                  <motion.span
+                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent"
+                    animate={{ x: ["-100%", "100%"] }}
+                    transition={{
+                      repeat: Infinity,
+                      duration: 1.6,
+                      ease: "linear",
+                    }}
+                  />
+                )}
+              </motion.div>
+            </div>
+          )}
         </div>
 
         {/* Duración configurada */}
         {task.timerMinutes ? (
           <div className="badge badge-ghost gap-1 flex-shrink-0 text-xs">
-            <FaHourglassHalf className="w-3 h-3" />
+            <motion.span
+              className="inline-flex"
+              animate={
+                timer.running ? { rotate: [0, 180, 180, 0] } : { rotate: 0 }
+              }
+              transition={
+                timer.running
+                  ? {
+                      duration: 4,
+                      times: [0, 0.45, 0.55, 1],
+                      repeat: Infinity,
+                      ease: "easeInOut",
+                    }
+                  : undefined
+              }
+            >
+              <FaHourglassHalf className="w-3 h-3" />
+            </motion.span>
             <span>{task.timerMinutes} min</span>
           </div>
         ) : null}

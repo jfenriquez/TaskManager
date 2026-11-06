@@ -52,6 +52,7 @@ export default function TaskModal({
               placeholder="Ej: Recoger la basura"
               className="input input-bordered w-full bg-base-200 text-base-content "
               value={task.title}
+              autoFocus
               onChange={(e) => onChange("title", e.target.value)}
             />
           </div>

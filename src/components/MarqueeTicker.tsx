@@ -10,7 +10,7 @@
 //  - Pausa al hover (playState) y control via prop `pauseOnHover`.
 //  - Evita animaciones si no hay suficiente contenido.
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 
 type Props = {
   texts: string[];
@@ -35,7 +35,7 @@ export default function MarqueeTicker({
   const [isRunning, setIsRunning] = useState(true);
 
   // Construye un array con los textos (filtrados)
-  const items = texts.map((t) => String(t));
+  const items = useMemo(() => texts.map((t) => String(t)), [texts]);
 
   // Repetir el bloque hasta que su ancho sea al menos igual al contenedor (para continuidad)
   const buildRepeated = (repeatTarget: number) => {
